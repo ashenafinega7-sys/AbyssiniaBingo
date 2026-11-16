@@ -548,11 +548,18 @@ async function attemptLogin() {
     const pass = document.getElementById('login-password').value.trim();
     const btn = document.getElementById('login-btn');
     const err = document.getElementById('login-error');
+    err.style.display = 'none';
     btn.disabled = true; btn.innerText = 'Verifying...';
     const basicAuth = 'Basic ' + btoa(user + ':' + pass);
     try {
         const loginUrl = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : '') + '/api/admin/dashboard';
-        const res = await fetch(loginUrl, { headers: { 'Authorization': basicAuth } });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const res = await fetch(loginUrl, { 
+            headers: { 'Authorization': basicAuth },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
         if (res.ok) {
             AUTH_TOKEN = basicAuth;
             sessionStorage.setItem('admin_auth', basicAuth);
@@ -560,9 +567,24 @@ async function attemptLogin() {
             document.getElementById('main-content').style.display = 'flex';
             switchPage('game', document.querySelector('.menu-item'));
             startNotificationPolling();
-        } else { err.style.display = 'block'; }
-    } catch (e) { err.innerText = "Connection error"; err.style.display = 'block'; }
-    finally { btn.disabled = false; btn.innerText = 'ENTER COMMAND CENTER'; }
+        } else if (res.status === 401) {
+            err.innerText = "❌ Incorrect username or password!";
+            err.style.display = 'block';
+        } else {
+            err.innerText = `❌ Server returned HTTP ${res.status} ${res.statusText}. Please verify your Render logs!`;
+            err.style.display = 'block';
+        }
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            err.innerText = "❌ Connection timed out (12s). The Render backend is sleeping or unreachable!";
+        } else {
+            err.innerText = `❌ Connection error: ${e.message}. Backend URL: ${typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'Not configured'}`;
+        }
+        err.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'ENTER COMMAND CENTER';
+    }
 }
 
 function logout() { AUTH_TOKEN = ""; sessionStorage.removeItem('admin_auth'); location.reload(); }

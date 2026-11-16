@@ -7,8 +7,14 @@ const mongoose = require('mongoose');
 const compression = require('compression');
 require('dotenv').config();
 
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '1.1.1.1']);
+if (process.env.CUSTOM_DNS) {
+    try {
+        const dns = require('dns');
+        dns.setServers(process.env.CUSTOM_DNS.split(','));
+    } catch (e) {
+        console.warn('Custom DNS setup skipped:', e.message);
+    }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -25,7 +31,15 @@ const ADMIN_IDS = (process.env.ADMIN_IDS || process.env.ADMIN_ID || "5925033073,
     .map(s => s.trim())
     .filter(Boolean);
 
-if (!BOT_TOKEN || !MONGODB_URI) { console.error('Missing env'); process.exit(1); }
+let isDbConnected = false;
+let dbErrorMsg = null;
+
+if (!BOT_TOKEN) {
+    console.warn('⚠️ WARNING: TELEGRAM_BOT_TOKEN is not set in environment variables!');
+}
+if (!MONGODB_URI) {
+    console.error('⚠️ WARNING: MONGODB_URI is not set in environment variables! Database operations will fail.');
+}
 
 // ─── Robust CORS for Cloudflare Pages (*.pages.dev) and Localhost ───
 const allowedOriginPatterns = [
@@ -72,10 +86,16 @@ app.use(corsMiddleware);
 app.use(express.json({ limit: '50kb' }));
 app.use(express.static('public', { maxAge: '1d' }));
 
-// ─── Lightweight Health Check for UptimeRobot (Zero DB Load) ───
+// ─── Lightweight Health Check for UptimeRobot / Diagnostics ───
 app.get('/health', (req, res) => {
     res.status(200).json({
-        status: 'ok',
+        status: isDbConnected ? 'ok' : 'degraded',
+        dbConnected: isDbConnected,
+        dbError: dbErrorMsg,
+        envCheck: {
+            hasBotToken: !!BOT_TOKEN,
+            hasMongoUri: !!MONGODB_URI
+        },
         uptime: Math.floor(process.uptime()),
         timestamp: new Date().toISOString()
     });
@@ -1415,27 +1435,40 @@ Object.values(ROOM_DEFINITIONS).forEach(def => {
     rooms[def.id] = initRoom(def);
 });
 
-// Connect to MongoDB and Boot Rooms
-mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000, maxPoolSize: 10, dbName: 'abisinya' })
-.then(async () => {
-    console.log('✅ MongoDB connected');
-    let s = await Settings.findOne({ key: 'payment_accounts' });
-    if (!s) {
-        s = await Settings.create({ key: 'payment_accounts' });
+// Connect to MongoDB and Boot Rooms (with auto-retry and zero crash on boot)
+async function connectToMongo() {
+    if (!MONGODB_URI) {
+        console.error('❌ Cannot connect to MongoDB: MONGODB_URI is empty.');
+        Object.values(rooms).forEach(room => { if (room.isRunning) startRoomRound(room); });
+        return;
     }
-    if (s.mega_jackpot_pool) globalMegaJackpot = s.mega_jackpot_pool;
-    if (s.jackpot_call_threshold) jackpotCallThreshold = s.jackpot_call_threshold;
-    if (s.jackpot_seed) jackpotSeed = s.jackpot_seed;
+    try {
+        await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000, maxPoolSize: 10, dbName: 'abisinya' });
+        isDbConnected = true;
+        dbErrorMsg = null;
+        console.log('✅ MongoDB connected successfully');
+        let s = await Settings.findOne({ key: 'payment_accounts' });
+        if (!s) s = await Settings.create({ key: 'payment_accounts' });
+        if (s.mega_jackpot_pool) globalMegaJackpot = s.mega_jackpot_pool;
+        if (s.jackpot_call_threshold) jackpotCallThreshold = s.jackpot_call_threshold;
+        if (s.jackpot_seed) jackpotSeed = s.jackpot_seed;
 
-    // Apply settings to rooms
-    Object.values(rooms).forEach(room => {
-        if (s.botNames && s.botNames.length > 0) room.settings.botNames = s.botNames;
-        if (s.botEnabled !== undefined) room.settings.botEnabled = s.botEnabled;
-        if (s.botWinRate !== undefined) room.settings.botWinRate = s.botWinRate;
-        if (room.isRunning) startRoomRound(room);
-    });
-})
-.catch(err => { console.error('❌ DB Error:', err.message); process.exit(1); });
+        Object.values(rooms).forEach(room => {
+            if (s.botNames && s.botNames.length > 0) room.settings.botNames = s.botNames;
+            if (s.botEnabled !== undefined) room.settings.botEnabled = s.botEnabled;
+            if (s.botWinRate !== undefined) room.settings.botWinRate = s.botWinRate;
+            if (room.isRunning) startRoomRound(room);
+        });
+    } catch (err) {
+        isDbConnected = false;
+        dbErrorMsg = err.message;
+        console.error('❌ MongoDB Connection Error:', err.message);
+        console.error('👉 TIP: In MongoDB Atlas -> Network Access, ensure 0.0.0.0/0 (Allow access from anywhere) is added.');
+        Object.values(rooms).forEach(room => { if (room.isRunning) startRoomRound(room); });
+        setTimeout(connectToMongo, 15000);
+    }
+}
+connectToMongo();
 
 // ─── Legacy compatibility alias for gameState ───
 const gameState = rooms['classic_10'];
@@ -2343,8 +2376,8 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, async () => {
-    console.log(`🚀 Abyssinia Mega Bingo Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', async () => {
+    console.log(`🚀 Abyssinia Mega Bingo Server running on port ${PORT} (0.0.0.0)`);
     const webhookBase = process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_URL;
     if (webhookBase && BOT_TOKEN) {
         const webhookUrl = `${webhookBase.replace(/\/$/, '')}/telegram-webhook`;
