@@ -1081,76 +1081,94 @@ function initRoom(def) {
     };
 }
 
-// ─── Room Bot Spawning ───
-function startRoomBotSpawning(room) {
+// ─── Room Bot Allocation & Immediate Card Holding ───
+function allocateRoomBots(room, count) {
     if (!room.settings.botEnabled) return;
-    if (room.botSpawnInterval) clearInterval(room.botSpawnInterval);
+    const targetBots = Math.max(0, Number(count !== undefined ? count : (room.settings.botCount || 0)));
+    room.settings.botCount = targetBots;
 
-    const targetBots = room.settings.botCount || 50;
-    let spawnedCount = 0;
+    // Find current bot cards in this room
+    const botCardNums = [];
+    for (const [cardStr, cardData] of Object.entries(room.takenCards)) {
+        if (cardData.isBot) botCardNums.push(Number(cardStr));
+    }
 
     const baseNames = (room.settings.botNames && room.settings.botNames.length > 0)
         ? room.settings.botNames
-        : ["Abebe", "Kebede", "Sara", "Dawit", "Almaz", "Yonas", "Selam", "Mahlet", "Meron", "Samuel", "Tigist", "Bruk", "Hiwot", "Nahom", "Ephrem"];
-    
-    const finalBotNames = [];
-    for (let i = 0; i < targetBots; i++) {
-        let name = baseNames[i % baseNames.length];
-        if (i >= baseNames.length) name += ` ${Math.floor(i / baseNames.length) + 1}`;
-        finalBotNames.push(name);
-    }
+        : [
+            "Abebe", "Kebede", "Sara", "Dawit", "Almaz", "Yonas", "Selam", "Mahlet", "Meron", 
+            "Samuel", "Tigist", "Bruk", "Hiwot", "Nahom", "Ephrem", "Kalkidan", "Getachew", 
+            "Aster", "Mulu", "Frehiwot", "Eyob", "Tewodros", "Mekdes", "Tsegaye", "Mariam",
+            "Sara", "Ruth", "Dagmawi", "Meseret", "Tesfaye", "Gidey", "Hagos", "Kidane", "Tirhas"
+        ];
 
-    const timeToSpawn = Math.max(5000, (room.settings.countdownTime * 1000) - 3000);
-    const intervalMs = Math.max(60, Math.floor(timeToSpawn / targetBots));
-
-    room.botSpawnInterval = setInterval(() => {
-        if (room.phase !== 'countdown' || spawnedCount >= targetBots) {
-            clearInterval(room.botSpawnInterval);
-            room.botSpawnInterval = null;
-            return;
-        }
-
+    // If we currently have more bot cards than targetBots, remove excess (leaving real players completely untouched)
+    if (botCardNums.length > targetBots) {
+        const toRemove = botCardNums.slice(targetBots);
+        toRemove.forEach(cn => {
+            delete room.takenCards[cn];
+            if (room.numberToCardsMap) {
+                Object.keys(room.numberToCardsMap).forEach(num => room.numberToCardsMap[num]?.delete(cn));
+            }
+        });
+    } else if (botCardNums.length < targetBots) {
+        // Need to add more bots
+        const needed = targetBots - botCardNums.length;
         const availableCards = [];
-        for (let i = 1; i <= room.settings.maxCards; i++) {
+        const maxC = room.settings.maxCards || 500;
+        for (let i = 1; i <= maxC; i++) {
             if (!room.takenCards[i]) availableCards.push(i);
         }
-        if (availableCards.length === 0) {
-            clearInterval(room.botSpawnInterval);
-            room.botSpawnInterval = null;
-            return;
+        // Shuffle available cards so bots pick random cartelas
+        for (let i = availableCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableCards[i], availableCards[j]] = [availableCards[j], availableCards[i]];
         }
 
-        const cardNum = availableCards[Math.floor(Math.random() * availableCards.length)];
-        const botName = finalBotNames[spawnedCount];
-        const botId = `bot_${Date.now()}_${spawnedCount}`;
+        const toAdd = Math.min(needed, availableCards.length);
+        for (let i = 0; i < toAdd; i++) {
+            const cardNum = availableCards[i];
+            const botIdx = botCardNums.length + i;
+            let botName = baseNames[botIdx % baseNames.length];
+            if (botIdx >= baseNames.length) botName += ` ${Math.floor(botIdx / baseNames.length) + 1}`;
+            const botId = `bot_${Date.now()}_${botIdx}_${cardNum}`;
 
-        room.takenCards[cardNum] = { userId: botId, isBot: true, botName: botName };
+            room.takenCards[cardNum] = {
+                userId: botId,
+                userName: botName,
+                isBot: true,
+                botName: botName
+            };
 
-        const cardCols = getCardCols(cardNum);
-        cardCols.forEach(col => {
-            col.forEach(num => {
-                if (num !== 'FREE') {
-                    if (!room.numberToCardsMap[num]) room.numberToCardsMap[num] = new Set();
-                    room.numberToCardsMap[num].add(cardNum);
-                }
+            const cardCols = getCardCols(cardNum);
+            cardCols.forEach(col => {
+                col.forEach(num => {
+                    if (num !== 'FREE') {
+                        if (!room.numberToCardsMap[num]) room.numberToCardsMap[num] = new Set();
+                        room.numberToCardsMap[num].add(cardNum);
+                    }
+                });
             });
-        });
+        }
+    }
 
-        spawnedCount++;
+    const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
+    const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
+    const totalCards = Object.keys(room.takenCards).length;
+    const currentFake = Math.floor((botsCount / (targetBots || 1)) * (room.settings.visualPlayers || targetBots));
+    const totalPlayersDisplay = currentFake + realCardsCount;
 
-        const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
-        const currentFake = Math.floor((spawnedCount / targetBots) * room.settings.visualPlayers);
-        const totalPlayersDisplay = currentFake + realCardsCount;
+    emitRoom(room.id, 'sync_taken_cards', {
+        roomId: room.id,
+        takenCards: Object.keys(room.takenCards).map(Number),
+        totalPlayers: totalPlayersDisplay,
+        totalCards: totalCards,
+        derash: totalCards * room.derashPerCard
+    });
+}
 
-        emitRoom(room.id, 'sync_taken_cards', {
-            roomId: room.id,
-            takenCards: Object.keys(room.takenCards).map(Number),
-            totalPlayers: totalPlayersDisplay,
-            totalCards: Object.keys(room.takenCards).length,
-            derash: Object.keys(room.takenCards).length * room.derashPerCard
-        });
-
-    }, intervalMs);
+function startRoomBotSpawning(room) {
+    allocateRoomBots(room, room.settings.botCount);
 }
 
 function getNextNumberToCall(room) {
@@ -1175,11 +1193,14 @@ function getNextNumberToCall(room) {
 }
 
 function emitRoom(roomId, event, data) {
-    io.to(`room_${roomId}`).emit(event, data);
+    const payload = { ...data, roomId };
+    io.to(`room_${roomId}`).emit(event, payload);
     // Also broadcast to legacy global room if this is classic_10
     if (roomId === 'classic_10') {
-        io.to('abisinya_global_room').emit(event, data);
+        io.to('abisinya_global_room').emit(event, payload);
     }
+    // Also broadcast directly to admin stream so admin panel is always 100% synced in real time
+    io.to('admin_stream').emit(event, payload);
 }
 
 async function checkForAutoWinner(room, newNumber) {
@@ -1482,6 +1503,12 @@ async function connectToMongo() {
             if (s.botEnabled !== undefined) room.settings.botEnabled = s.botEnabled;
             if (s.botWinRate !== undefined) room.settings.botWinRate = s.botWinRate;
             if (s.maxCards) room.settings.maxCards = s.maxCards;
+            const savedBots = s.get ? s.get(`botCount_${room.id}`) : s[`botCount_${room.id}`];
+            if (savedBots !== undefined && Number.isFinite(Number(savedBots))) {
+                room.settings.botCount = Number(savedBots);
+            } else if (room.id === 'classic_10' && s.botCount !== undefined) {
+                room.settings.botCount = Number(s.botCount);
+            }
             room.phase = 'waiting';
         });
     } catch (err) {
@@ -1595,13 +1622,25 @@ app.post('/api/admin/room/:roomId/max-cards', adminAuth, async (req, res) => {
 
 app.post('/api/admin/room/:roomId/adjust-bots', adminAuth, async (req, res) => {
     const room = rooms[req.params.roomId] || rooms['classic_10'];
-    let newCount = room.settings.botCount || 50;
+    let newCount = room.settings.botCount !== undefined ? room.settings.botCount : 40;
     if (req.body.delta !== undefined) {
         newCount = Math.max(0, newCount + Number(req.body.delta));
     } else if (req.body.botCount !== undefined) {
         newCount = Math.max(0, Number(req.body.botCount));
     }
     room.settings.botCount = newCount;
+    try {
+        const updateDoc = {};
+        updateDoc[`botCount_${room.id}`] = newCount;
+        if (room.id === 'classic_10') updateDoc.botCount = newCount;
+        await Settings.updateOne({ key: 'payment_accounts' }, { $set: updateDoc }, { upsert: true });
+    } catch (e) {
+        console.error('Error persisting botCount to Settings:', e.message);
+    }
+    // Immediately spawn or adjust bot cards alongside real players if in waiting or countdown
+    if (room.phase === 'waiting' || room.phase === 'countdown') {
+        allocateRoomBots(room, newCount);
+    }
     res.json({ success: true, botCount: room.settings.botCount, roomId: room.id });
 });
 
@@ -1777,7 +1816,7 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
 
         for (const [card, data] of Object.entries(room.takenCards)) {
             const cardNum = Number(card);
-            const pName = data.isBot ? data.botName : (playerMap.get(data.userId) || "Unknown");
+            const pName = data.isBot ? data.botName : (data.userName || playerMap.get(data.userId) || "Player");
             takenCardsDetails[card] = {
                 userId: data.userId,
                 userName: pName,
@@ -1820,7 +1859,8 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
         // Cartelas that complete more than the other appear at the top!
         liveCardsLeaderboard.sort((a, b) => {
             if (a.distance !== b.distance) return a.distance - b.distance;
-            return b.matchedCount - a.matchedCount;
+            if (b.matchedCount !== a.matchedCount) return b.matchedCount - a.matchedCount;
+            return b.percent - a.percent;
         });
 
         const activePlayersList = Array.from(playerMapSummary.values());
@@ -2091,42 +2131,105 @@ app.post('/api/promo/claim', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// ─── Giveaway CRUD ───
+app.get('/api/admin/giveaways', adminAuth, async (req, res) => {
+    try {
+        const giveaways = await Giveaway.find({}).sort({ createdAt: -1 }).limit(50).lean();
+        res.json({ success: true, data: giveaways });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.post('/api/admin/giveaway', adminAuth, async (req, res) => {
     try {
         const { amount, totalUsers, message, durationMinutes } = req.body;
-        const amt = Number(amount); const limit = Number(totalUsers); const duration = Number(durationMinutes) || 60; 
+        const amt = Number(amount);
+        const limit = Number(totalUsers);
+        const duration = Number(durationMinutes) || 60;
         const expiresAt = new Date(Date.now() + duration * 60 * 1000);
-        const giveaway = await Giveaway.create({ id: 'gw_' + Date.now(), amount: amt, totalUsers: limit, expiresAt: expiresAt, message: message || `🎁 <b>የመጫወቻ ቦነስ!</b>\n\n${limit} ተጫዋቾች ብቻ የ ${amt} ETB ቦነስ ማግኘት ይችላሉ።` });
+        const giveaway = await Giveaway.create({
+            id: 'gw_' + Date.now(),
+            amount: amt,
+            totalUsers: limit,
+            expiresAt: expiresAt,
+            message: message || `🎁 <b>የመጫወቻ ቦነስ!</b>\n\n${limit} ተጫዋቾች ብቻ የ ${amt} ETB ቦነስ ማግኘት ይችላሉ።`
+        });
         const users = await User.find({}, { id: 1 }).lean();
         let sentMessages = [];
         const text = giveaway.message + `\n\n⏳ <i>ይህ ቦነስ በ ${duration} ደቂቃ ውስጥ ያበቃል።</i>`;
         for (const u of users) {
             try {
-                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: u.id, text: text, parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: `🎁 Claim ${amt} ETB Bonus`, callback_data: `claim_gw_${giveaway.id}` }]] } }) });
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: u.id,
+                        text: text,
+                        parse_mode: 'HTML',
+                        reply_markup: { inline_keyboard: [[{ text: `🎁 Claim ${amt} ETB Bonus`, callback_data: `claim_gw_${giveaway.id}` }]] }
+                    })
+                });
                 const data = await response.json();
-                if (data.ok) sentMessages.push({ user_id: u.id, message_id: data.result.message_id });
-            } catch (err) { }
+                if (data.ok) sentMessages.push({ user_id: String(u.id), message_id: data.result.message_id });
+            } catch (err) {}
         }
-        giveaway.sentMessages = sentMessages; await giveaway.save();
-        res.json({ success: true, count: users.length });
-    } catch (e) { res.status(500).json({ success: false }); }
+        giveaway.sentMessages = sentMessages;
+        await giveaway.save();
+        res.json({ success: true, count: sentMessages.length });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-app.get('/api/admin/giveaways', adminAuth, async (req, res) => {
-    try { const giveaways = await Giveaway.find({}).sort({ createdAt: -1 }).limit(50).lean(); res.json({ success: true, data: giveaways }); }
-    catch (e) { res.status(500).json({ success: false }); }
+app.put('/api/admin/giveaways/:id', adminAuth, async (req, res) => {
+    try {
+        const giveaway = await Giveaway.findOne({ $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] });
+        if (!giveaway) return res.status(404).json({ success: false, error: 'Giveaway not found' });
+
+        if (req.body.status) giveaway.status = req.body.status;
+        if (req.body.message) giveaway.message = req.body.message;
+        await giveaway.save();
+
+        if (req.body.status === 'closed' && giveaway.sentMessages?.length) {
+            const closedText = `⏳ <b>ይህ ቦነስ ተዘግቷል! (Giveaway Closed)</b>\n\n${giveaway.message}`;
+            for (const msg of giveaway.sentMessages) {
+                try {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: msg.user_id,
+                            message_id: msg.message_id,
+                            text: closedText,
+                            parse_mode: 'HTML'
+                        })
+                    });
+                } catch (e) {}
+            }
+        }
+        res.json({ success: true, data: giveaway });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 app.delete('/api/admin/giveaways/:id', adminAuth, async (req, res) => {
     try {
-        const giveaway = await Giveaway.findOne({ id: req.params.id });
-        if (!giveaway) return res.status(404).json({ success: false });
-        giveaway.sentMessages.forEach(async (msg) => { try { await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.user_id, message_id: msg.message_id }) }); } catch (e) {} });
-        await Giveaway.deleteOne({ id: req.params.id });
+        const giveaway = await Giveaway.findOne({ $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] });
+        if (!giveaway) return res.status(404).json({ success: false, error: 'Giveaway not found' });
+        
+        if (giveaway.sentMessages && giveaway.sentMessages.length > 0) {
+            for (const msg of giveaway.sentMessages) {
+                try {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: msg.user_id, message_id: msg.message_id })
+                    });
+                } catch (e) {}
+            }
+        }
+        await Giveaway.deleteOne({ _id: giveaway._id });
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── Game History CRUD ───
 app.get('/api/admin/game-history', adminAuth, async (req, res) => {
     try {
         const history = await GameHistory.find({}).sort({ createdAt: -1 }).limit(100).lean();
@@ -2134,8 +2237,18 @@ app.get('/api/admin/game-history', adminAuth, async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+app.delete('/api/admin/game-history/all', adminAuth, async (req, res) => {
+    try {
+        await GameHistory.deleteMany({});
+        res.json({ success: true, message: 'All game history cleared' });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 app.delete('/api/admin/game-history/:id', adminAuth, async (req, res) => {
-    try { await GameHistory.findByIdAndDelete(req.params.id); res.json({ success: true }); } catch (e) { res.status(500).json({ success: false }); }
+    try {
+        await GameHistory.deleteOne({ $or: [{ _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }, { gameId: req.params.id }] });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 app.post('/api/admin/bulk-delete', adminAuth, async (req, res) => {
@@ -2149,35 +2262,90 @@ app.post('/api/admin/bulk-delete', adminAuth, async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── Broadcast CRUD ───
 app.get('/api/admin/broadcasts', adminAuth, async (req, res) => {
-    try { const broadcasts = await Broadcast.find({ status: 'active' }).sort({ sentAt: -1 }).limit(50).lean(); res.json({ success: true, data: broadcasts }); }
-    catch (e) { res.status(500).json({ success: false }); }
+    try {
+        const broadcasts = await Broadcast.find({ status: { $ne: 'deleted' } }).sort({ sentAt: -1 }).limit(50).lean();
+        res.json({ success: true, data: broadcasts });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 app.post('/api/admin/broadcast', adminAuth, async (req, res) => {
     try {
         const { message, targetUserId } = req.body;
+        if (!message || !message.trim()) return res.status(400).json({ success: false, error: 'Message cannot be empty' });
         let users = targetUserId ? [{ id: targetUserId }] : await User.find({}, { id: 1 }).lean();
         let sentMessages = []; 
         for (const u of users) {
             try {
-                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: u.id, text: message, parse_mode: 'HTML' }) });
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: u.id, text: message, parse_mode: 'HTML' })
+                });
                 const data = await response.json();
-                if (data.ok) sentMessages.push({ user_id: u.id, message_id: data.result.message_id });
-            } catch (err) { }
+                if (data.ok) sentMessages.push({ user_id: String(u.id), message_id: data.result.message_id });
+            } catch (err) {}
         }
-        if (!targetUserId) await Broadcast.create({ id: 'bc_' + Date.now(), message: message, sentMessages: sentMessages });
-        res.json({ success: true, count: users.length });
-    } catch (e) { res.status(500).json({ success: false }); }
+        let bc = null;
+        if (!targetUserId) {
+            bc = await Broadcast.create({ id: 'bc_' + Date.now(), message: message, sentMessages: sentMessages });
+        }
+        res.json({ success: true, count: sentMessages.length, data: bc });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+app.put('/api/admin/broadcasts/:id', adminAuth, async (req, res) => {
+    try {
+        const { message } = req.body;
+        if (!message || !message.trim()) return res.status(400).json({ success: false, error: 'Message cannot be empty' });
+        const broadcast = await Broadcast.findOne({ $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] });
+        if (!broadcast) return res.status(404).json({ success: false, error: 'Broadcast not found' });
+        
+        broadcast.message = message;
+        await broadcast.save();
+
+        let updatedCount = 0;
+        if (broadcast.sentMessages && broadcast.sentMessages.length > 0) {
+            for (const msg of broadcast.sentMessages) {
+                try {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            chat_id: msg.user_id,
+                            message_id: msg.message_id,
+                            text: message,
+                            parse_mode: 'HTML'
+                        })
+                    });
+                    updatedCount++;
+                } catch (e) {}
+            }
+        }
+        res.json({ success: true, updatedCount });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 app.delete('/api/admin/broadcasts/:id', adminAuth, async (req, res) => {
     try {
-        const broadcast = await Broadcast.findOne({ id: req.params.id });
-        if (!broadcast) return res.status(404).json({ success: false });
-        broadcast.sentMessages.forEach(async (msg) => { try { await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: msg.user_id, message_id: msg.message_id }) }); } catch (e) {} });
-        broadcast.status = 'deleted'; await broadcast.save(); res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
+        const broadcast = await Broadcast.findOne({ $or: [{ id: req.params.id }, { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null }] });
+        if (!broadcast) return res.status(404).json({ success: false, error: 'Broadcast not found' });
+        
+        if (broadcast.sentMessages && broadcast.sentMessages.length > 0) {
+            for (const msg of broadcast.sentMessages) {
+                try {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: msg.user_id, message_id: msg.message_id })
+                    });
+                } catch (e) {}
+            }
+        }
+        await Broadcast.deleteOne({ _id: broadcast._id });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 // User Wallet APIs
@@ -2315,13 +2483,30 @@ io.on('connection', (socket) => {
         socket.join('abisinya_global_room');
 
         let userId = null;
+        let userName = payload?.name || 'Player';
+        let username = payload?.username || '';
         if (payload?.initData && BOT_TOKEN) {
             const tgUser = verifyTelegramInitData(payload.initData, BOT_TOKEN);
-            if (tgUser) userId = String(tgUser.id);
+            if (tgUser) {
+                userId = String(tgUser.id);
+                if (tgUser.first_name) userName = ((tgUser.first_name || '') + ' ' + (tgUser.last_name || '')).trim();
+                if (tgUser.username) username = tgUser.username;
+            }
         }
         if (!userId && payload?.clientId) userId = String(payload.clientId);
         socket.verifiedId = userId;
-        if (userId) socket.join(`user_${userId}`);
+        socket.verifiedName = userName;
+        if (userId) {
+            socket.join(`user_${userId}`);
+            User.findOneAndUpdate(
+                { id: String(userId) },
+                { 
+                    $setOnInsert: { play_balance: 50, win_balance: 0, registered: true },
+                    $set: { name: userName, username: username }
+                },
+                { upsert: true, new: true }
+            ).catch(e => console.error('Upsert user error on join_room:', e.message));
+        }
 
         const room = rooms[targetRoomId];
         const myCards = [];
@@ -2434,7 +2619,12 @@ io.on('connection', (socket) => {
                 );
                 if (!updated) return socket.emit('card_error', { message: `❌ ቀሪ ሂሳብ በቂ አይደለም! (ያስፈልጋል: ${cardPrice} ETB)` });
 
-                room.takenCards[cardNum] = { userId: socket.verifiedId, isBot: false };
+                const pName = socket.verifiedName || data?.userName || updated.name || 'Player';
+                room.takenCards[cardNum] = {
+                    userId: String(socket.verifiedId),
+                    userName: pName,
+                    isBot: false
+                };
                 socket.emit('wallet_updated', {});
 
                 // If room contributes to Mega Jackpot, increment pool

@@ -477,8 +477,8 @@
                     <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="sendBroadcast()"><i class="fas fa-paper-plane"></i> Send to All Players</button>
                 </div>
                 <div class="table-wrapper">
-                    <div class="table-header"><h3>Previous Broadcasts</h3><button class="btn btn-primary btn-sm" onclick="loadBroadcasts()"><i class="fas fa-sync"></i></button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Message</th></tr></thead><tbody id="broadcast-table-body"></tbody></table></div>
+                    <div class="table-header"><h3>Broadcast Logs & Management</h3><button class="btn btn-primary btn-sm" onclick="loadBroadcasts()"><i class="fas fa-sync"></i> Refresh</button></div>
+                    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Message</th><th>Sent Count</th><th>Action</th></tr></thead><tbody id="broadcast-table-body"></tbody></table></div>
                 </div>
             </div>
 
@@ -492,8 +492,8 @@
                     <button class="btn btn-success" style="width: 100%; padding: 12px;" onclick="createGiveaway()"><i class="fas fa-gift"></i> Launch Giveaway</button>
                 </div>
                 <div class="table-wrapper">
-                    <div class="table-header"><h3>Active Giveaways</h3><button class="btn btn-primary btn-sm" onclick="loadGiveaways()"><i class="fas fa-sync"></i></button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Amount</th><th>Total Users</th><th>Claimed</th><th>Status</th></tr></thead><tbody id="giveaway-table-body"></tbody></table></div>
+                    <div class="table-header"><h3>Giveaway Campaigns</h3><button class="btn btn-primary btn-sm" onclick="loadGiveaways()"><i class="fas fa-sync"></i> Refresh</button></div>
+                    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Amount</th><th>Total Users</th><th>Claimed</th><th>Status</th><th>Action</th></tr></thead><tbody id="giveaway-table-body"></tbody></table></div>
                 </div>
             </div>
 
@@ -508,8 +508,14 @@
             <!-- ─── Game History ─── -->
             <div id="page-history" class="page">
                 <div class="table-wrapper">
-                    <div class="table-header"><h3>Game History Logs</h3><button class="btn btn-primary btn-sm" onclick="loadGameHistory()"><i class="fas fa-sync"></i></button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Room</th><th>Winners</th><th>Total Prize</th><th>Players</th></tr></thead><tbody id="history-table-body"></tbody></table></div>
+                    <div class="table-header">
+                        <h3>Game History Logs</h3>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-danger btn-sm" onclick="clearAllGameHistory()"><i class="fas fa-trash-alt"></i> Clear All History</button>
+                            <button class="btn btn-primary btn-sm" onclick="loadGameHistory()"><i class="fas fa-sync"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Room</th><th>Winners</th><th>Total Prize</th><th>Players</th><th>Action</th></tr></thead><tbody id="history-table-body"></tbody></table></div>
                 </div>
             </div>
 
@@ -769,46 +775,55 @@ async function loadGameStatus() {
 
             // Active Players List
             const plist = document.getElementById('active-players-list');
-            if (room.takenCardsDetails) {
-                const playerMap = new Map();
-                Object.entries(room.takenCardsDetails).forEach(([cardNum, data]) => {
-                    if (!playerMap.has(data.userId)) playerMap.set(data.userId, { name: data.userName, isBot: data.isBot, cards: [] });
-                    playerMap.get(data.userId).cards.push(cardNum);
-                });
-                let html = '';
-                Array.from(playerMap.entries()).forEach(([userId, info]) => {
-                    let bgColor = info.isBot ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)';
-                    let borderColor = info.isBot ? 'var(--blue)' : 'var(--primary)';
-                    let botBadge = info.isBot 
-                        ? '<span style="font-size:9px; background:var(--blue); color:#fff; padding:1px 5px; border-radius:8px;">BOT</span>' 
-                        : '<span style="font-size:9px; background:var(--primary); color:#000; padding:1px 5px; border-radius:8px; font-weight:bold;">REAL</span>';
-                    
-                    let userAction = !info.isBot 
-                        ? `onclick="fetchAndOpenPlayer('${userId}')" style="cursor:pointer;" title="Click to view player profile"` 
-                        : '';
+            if (plist) {
+                if (room.phase === 'waiting' && (!room.takenCardsDetails || Object.keys(room.takenCardsDetails).length === 0)) {
+                    plist.innerHTML = '<span style="color:var(--text-muted); font-size:12px;">No active players in room.</span>';
+                } else if (room.takenCardsDetails && Object.keys(room.takenCardsDetails).length > 0) {
+                    const playerMap = new Map();
+                    Object.entries(room.takenCardsDetails).forEach(([cardNum, data]) => {
+                        if (!playerMap.has(data.userId)) playerMap.set(data.userId, { name: data.userName, isBot: data.isBot, cards: [] });
+                        playerMap.get(data.userId).cards.push(cardNum);
+                    });
+                    let html = '';
+                    Array.from(playerMap.entries()).forEach(([userId, info]) => {
+                        let bgColor = info.isBot ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)';
+                        let borderColor = info.isBot ? 'var(--blue)' : 'var(--primary)';
+                        let botBadge = info.isBot 
+                            ? '<span style="font-size:9px; background:var(--blue); color:#fff; padding:1px 5px; border-radius:8px;">BOT</span>' 
+                            : '<span style="font-size:9px; background:var(--primary); color:#000; padding:1px 5px; border-radius:8px; font-weight:bold;">REAL</span>';
+                        
+                        let userAction = !info.isBot 
+                            ? `onclick="fetchAndOpenPlayer('${userId}')" style="cursor:pointer;" title="Click to view player profile"` 
+                            : '';
 
-                    html += `
-                        <div ${userAction} style="background:${bgColor}; border:1px solid ${borderColor}; padding:8px 12px; border-radius:8px; min-width:150px; transition:0.2s;">
-                            <div style="font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
-                                <span><i class="${info.isBot ? 'fas fa-robot' : 'fas fa-user'}"></i> ${escapeHtml(info.name)}</span>
-                                ${botBadge}
+                        html += `
+                            <div ${userAction} style="background:${bgColor}; border:1px solid ${borderColor}; padding:8px 12px; border-radius:8px; min-width:150px; transition:0.2s;">
+                                <div style="font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                                    <span><i class="${info.isBot ? 'fas fa-robot' : 'fas fa-user'}"></i> ${escapeHtml(info.name)}</span>
+                                    ${botBadge}
+                                </div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+                                    <b>${info.cards.length}</b> Cards (#${info.cards.slice(0, 4).join(', ')}${info.cards.length > 4 ? '...' : ''})
+                                </div>
                             </div>
-                            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
-                                <b>${info.cards.length}</b> Cards (#${info.cards.slice(0, 4).join(', ')}${info.cards.length > 4 ? '...' : ''})
-                            </div>
-                        </div>
-                    `;
-                });
-                plist.innerHTML = html || '<span style="color:var(--text-muted); font-size:12px;">No active players in room.</span>';
+                        `;
+                    });
+                    plist.innerHTML = html;
+                } else {
+                    plist.innerHTML = '<span style="color:var(--text-muted); font-size:12px;">No active players in room.</span>';
+                }
             }
 
             // Live Cartela Proximity & Completion Leaderboard (Closest to Win at Top)
             const cartelaBody = document.getElementById('live-cartelas-table-body');
             const nearWinBadge = document.getElementById('adm-near-win-badge');
-            if (cartelaBody && room.liveCardsLeaderboard) {
-                if (room.liveCardsLeaderboard.length === 0) {
+            if (cartelaBody) {
+                if (room.phase === 'waiting' || !room.liveCardsLeaderboard || room.liveCardsLeaderboard.length === 0) {
                     cartelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:18px;">No active cartelas in room. Start round to view live cards.</td></tr>';
-                    if (nearWinBadge) nearWinBadge.innerText = '0 Near Win';
+                    if (nearWinBadge) {
+                        nearWinBadge.innerText = '0 Near Win';
+                        nearWinBadge.style.display = 'none';
+                    }
                 } else {
                     let rowsHtml = '';
                     let nearWinCount = 0;
@@ -1322,15 +1337,31 @@ async function deletePromoCode(id) {
     } catch(e) {}
 }
 
-// ─── Broadcast & Giveaway ───
+// ─── Broadcast CRUD ───
 async function loadBroadcasts() {
     const tbody = document.getElementById('broadcast-table-body');
     try {
         const d = await apiFetch('/api/admin/broadcasts');
         if (d.success) {
             tbody.innerHTML = '';
+            if (!d.data || !d.data.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:15px;">No broadcasts found.</td></tr>';
+                return;
+            }
             d.data.forEach(b => {
-                tbody.innerHTML += `<tr><td>${new Date(b.sentAt).toLocaleString()}</td><td>${escapeHtml(b.message)}</td></tr>`;
+                const bId = b.id || b._id;
+                const sentCount = b.sentMessages ? b.sentMessages.length : 0;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(b.sentAt).toLocaleString()}</td>
+                        <td style="max-width:320px; word-break:break-word;">${escapeHtml(b.message)}</td>
+                        <td><span class="badge" style="background:rgba(59,130,246,0.15); color:var(--blue); padding:3px 8px; border-radius:10px; font-weight:bold;">${sentCount} players</span></td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="editBroadcastPrompt('${bId}', '${encodeURIComponent(b.message)}')"><i class="fas fa-edit"></i> Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteBroadcast('${bId}')"><i class="fas fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                `;
             });
         }
     } catch(e) {}
@@ -1349,14 +1380,61 @@ async function sendBroadcast() {
     } catch(e) { showToast('Send failed', true); }
 }
 
+async function editBroadcastPrompt(id, encodedCurrentMsg) {
+    const currentMsg = decodeURIComponent(encodedCurrentMsg);
+    const newMsg = prompt("Edit broadcast message (will update in real time on all users' Telegram):", currentMsg);
+    if (!newMsg || !newMsg.trim() || newMsg.trim() === currentMsg) return;
+    try {
+        const res = await apiFetch(`/api/admin/broadcasts/${id}`, 'PUT', { message: newMsg.trim() });
+        if (res.success) {
+            showToast(`Broadcast updated across all Telegram chats! (${res.updatedCount || 0} modified)`);
+            loadBroadcasts();
+        } else {
+            showToast(res.error || 'Edit failed', true);
+        }
+    } catch(e) { showToast('Server error', true); }
+}
+
+async function deleteBroadcast(id) {
+    if (!confirm('Are you sure you want to delete this broadcast? This will remove the message from all users\' Telegram chats!')) return;
+    try {
+        const res = await apiFetch(`/api/admin/broadcasts/${id}`, 'DELETE');
+        if (res.success) {
+            showToast('Broadcast deleted from all Telegram chats!');
+            loadBroadcasts();
+        } else {
+            showToast('Delete failed', true);
+        }
+    } catch(e) { showToast('Server error', true); }
+}
+
+// ─── Giveaway CRUD ───
 async function loadGiveaways() {
     const tbody = document.getElementById('giveaway-table-body');
     try {
         const d = await apiFetch('/api/admin/giveaways');
         if (d.success) {
             tbody.innerHTML = '';
+            if (!d.data || !d.data.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:15px;">No giveaways found.</td></tr>';
+                return;
+            }
             d.data.forEach(g => {
-                tbody.innerHTML += `<tr><td>${new Date(g.createdAt).toLocaleDateString()}</td><td style="color:var(--gold); font-weight:bold;">${g.amount} ETB</td><td>${g.totalUsers}</td><td>${g.claimedBy.length}</td><td>${g.status}</td></tr>`;
+                const gId = g.id || g._id;
+                const statusColor = g.status === 'active' ? 'var(--success)' : 'var(--text-muted)';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(g.createdAt).toLocaleDateString()}</td>
+                        <td style="color:var(--gold); font-weight:bold;">${g.amount} ETB</td>
+                        <td>${g.totalUsers}</td>
+                        <td><b>${(g.claimedBy || []).length}</b> / ${g.totalUsers}</td>
+                        <td><span style="color:${statusColor}; font-weight:bold; text-transform:uppercase;">${g.status}</span></td>
+                        <td>
+                            ${g.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="closeGiveaway('${gId}')"><i class="fas fa-ban"></i> Close</button>` : ''}
+                            <button class="btn btn-danger btn-sm" onclick="deleteGiveaway('${gId}')"><i class="fas fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                `;
             });
         }
     } catch(e) {}
@@ -1370,10 +1448,32 @@ async function createGiveaway() {
     try {
         const res = await apiFetch('/api/admin/giveaway', 'POST', { amount: amt, totalUsers: users, durationMinutes: duration });
         if (res.success) {
-            showToast('Giveaway created & broadcasted!');
+            showToast(`Giveaway created & sent to ${res.count || 0} players!`);
             loadGiveaways();
         }
     } catch(e) { showToast('Failed', true); }
+}
+
+async function closeGiveaway(id) {
+    if (!confirm('Close this giveaway campaign? Users will no longer be able to claim bonuses.')) return;
+    try {
+        const res = await apiFetch(`/api/admin/giveaways/${id}`, 'PUT', { status: 'closed' });
+        if (res.success) {
+            showToast('Giveaway closed and updated on Telegram!');
+            loadGiveaways();
+        }
+    } catch(e) { showToast('Error closing giveaway', true); }
+}
+
+async function deleteGiveaway(id) {
+    if (!confirm('Delete giveaway? This will delete the claim message from all users\' Telegram chats.')) return;
+    try {
+        const res = await apiFetch(`/api/admin/giveaways/${id}`, 'DELETE');
+        if (res.success) {
+            showToast('Giveaway cleared from all Telegram chats and database!');
+            loadGiveaways();
+        }
+    } catch(e) { showToast('Delete failed', true); }
 }
 
 // ─── Referrals & History ───
@@ -1404,6 +1504,10 @@ async function loadGameHistory() {
         const d = await apiFetch('/api/admin/game-history');
         if (d.success) {
             tbody.innerHTML = '';
+            if (!d.data || !d.data.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:15px;">No game history logs.</td></tr>';
+                return;
+            }
             d.data.forEach(h => {
                 let winnersStr = (h.winners || []).map(w => `${w.name} #${w.cardNum}`).join(', ');
                 let jackpotBadge = h.jackpotWon > 0 ? `<span style="background:var(--gold); color:#000; padding:2px 5px; border-radius:4px; font-weight:bold; font-size:10px;">JACKPOT</span>` : '';
@@ -1414,11 +1518,34 @@ async function loadGameHistory() {
                         <td>${escapeHtml(winnersStr || 'None')}</td>
                         <td style="color:var(--success); font-weight:bold;">${h.totalPrize} ETB</td>
                         <td>${h.totalPlayers}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteSingleHistory('${h._id}')"><i class="fas fa-trash"></i></button></td>
                     </tr>
                 `;
             });
         }
     } catch(e) {}
+}
+
+async function deleteSingleHistory(id) {
+    if (!confirm('Delete this history record?')) return;
+    try {
+        const res = await apiFetch(`/api/admin/game-history/${id}`, 'DELETE');
+        if (res.success) {
+            showToast('History record deleted');
+            loadGameHistory();
+        }
+    } catch(e) { showToast('Error deleting record', true); }
+}
+
+async function clearAllGameHistory() {
+    if (!confirm('⚠️ Are you sure you want to permanently clear ALL game history logs? This action cannot be undone!')) return;
+    try {
+        const res = await apiFetch('/api/admin/game-history/all', 'DELETE');
+        if (res.success) {
+            showToast('All game history cleared!');
+            loadGameHistory();
+        }
+    } catch(e) { showToast('Clear failed', true); }
 }
 
 // ─── Global Settings ───
@@ -1477,6 +1604,15 @@ function initAdminRealtime() {
                 if (currentPage === 'withdrawals') loadTransactions('withdrawal');
             }
             if (currentPage === 'dashboard') loadDashboardData();
+        });
+
+        // Real-Time Game Events Syncing directly from server
+        ['sync_taken_cards', 'new_number_called', 'phase_change', 'reset_game', 'game_over'].forEach(ev => {
+            adminSocket.on(ev, (data) => {
+                if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+                    loadGameStatus();
+                }
+            });
         });
     } catch(e) {
         console.warn('Admin realtime socket skipped:', e);
