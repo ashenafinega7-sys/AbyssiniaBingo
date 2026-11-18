@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Abyssinia Mega Bingo - Admin Command Center</title>
 <script src="./config.js"></script>
+<script src="./socket.io.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     :root {
@@ -260,7 +261,7 @@
                         
                         <div style="display:flex; gap:4px; margin-left: 6px; border-left: 2px solid var(--border); padding-left: 10px;">
                             <input type="number" id="manual-call-input" min="1" max="75" placeholder="1-75" style="width: 75px; padding: 7px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-weight:bold;">
-                            <button class="btn btn-primary btn-sm" onclick="callSpecificNumber()"><i class="fas fa-bullhorn"></i> Call</button>
+                            <button class="btn btn-primary btn-sm" onclick="callSpecificNumber()"><i class="fas fa-bullhorn"></i> Call Number</button>
                         </div>
 
                         <select class="form-control" id="speed-select" onchange="changeSpeed()" style="width: 110px; margin-left: 6px; padding:7px;">
@@ -270,15 +271,77 @@
                         
                         <button class="btn btn-danger" id="force-win-btn" onclick="toggleForceWin()" style="margin-left: 6px;"><i class="fas fa-bolt"></i> Force Bot Win</button>
                     </div>
+
+                    <!-- Room Configuration: Cartelas Pool & Ghost Bots Controls -->
+                    <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap; align-items:center;">
+                        <!-- Cartelas Adjustment -->
+                        <div style="display:flex; gap:8px; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; border:1px solid var(--border);">
+                            <span style="font-size:12px; font-weight:bold; color:var(--cyan);"><i class="fas fa-th"></i> Cartela Pool:</span>
+                            <div style="display:flex; gap:4px;">
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(50)">50</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(100)">100</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(200)">200</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(500)">500</button>
+                            </div>
+                            <input type="number" id="adm-max-cards-input" min="20" max="1000" placeholder="500" style="width:70px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:bold;">
+                            <button class="btn btn-primary btn-sm" onclick="saveRoomMaxCards()"><i class="fas fa-check"></i> Set Pool</button>
+                        </div>
+
+                        <!-- Ghost Bots Adjustment -->
+                        <div style="display:flex; gap:8px; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; border:1px solid var(--border);">
+                            <span style="font-size:12px; font-weight:bold; color:var(--blue);"><i class="fas fa-robot"></i> Ghost Bots: <span id="adm-current-bots" style="color:var(--gold); font-size:13px;">0</span></span>
+                            <div style="display:flex; gap:3px;">
+                                <button class="btn btn-danger btn-sm" style="padding:3px 6px; font-size:11px;" onclick="adjustRoomBots(-10)">-10</button>
+                                <button class="btn btn-danger btn-sm" style="padding:3px 6px; font-size:11px;" onclick="adjustRoomBots(-5)">-5</button>
+                                <button class="btn btn-danger btn-sm" style="padding:3px 6px; font-size:11px;" onclick="adjustRoomBots(-1)">-1</button>
+                                <button class="btn btn-success btn-sm" style="padding:3px 6px; font-size:11px;" onclick="adjustRoomBots(1)">+1</button>
+                                <button class="btn btn-success btn-sm" style="padding:3px 6px; font-size:11px;" onclick="adjustRoomBots(5)">+5</button>
+                                <button class="btn btn-success btn-sm" style="padding:3px 6px; font-size:11px;" onclick="adjustRoomBots(10)">+10</button>
+                            </div>
+                            <input type="number" id="adm-bots-input" min="0" placeholder="Bots" style="width:65px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:bold;">
+                            <button class="btn btn-warning btn-sm" onclick="saveRoomBotCount()"><i class="fas fa-save"></i> Set</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Active Players Grid -->
-                <div class="table-wrapper">
+                <div class="table-wrapper" style="margin-bottom: 20px;">
                     <div class="table-header">
                         <h3><i class="fas fa-users"></i> Live Players in Room</h3>
                         <span id="adm-real-vs-bot" style="font-size:12px; color:var(--text-muted);">Real: 0 | Bots: 0</span>
                     </div>
                     <div style="padding: 15px; display: flex; flex-wrap: wrap; gap: 10px;" id="active-players-list"></div>
+                </div>
+
+                <!-- Live Cartela Proximity & Completion (Closest to Win at Top) -->
+                <div class="table-wrapper">
+                    <div class="table-header">
+                        <div>
+                            <h3><i class="fas fa-trophy" style="color:var(--gold);"></i> Live Cartela Proximity & Completion</h3>
+                            <span style="font-size:11px; color:var(--text-muted);">Cartelas closest to Bingo (most completed) appear at the top in real-time</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <span class="badge" id="adm-near-win-badge" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:11px;">0 Near Win</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width:65px;">Rank</th>
+                                    <th>Cartela #</th>
+                                    <th>Player</th>
+                                    <th>Type</th>
+                                    <th>Proximity</th>
+                                    <th>Progress</th>
+                                    <th style="width:90px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="live-cartelas-table-body">
+                                <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:15px;">No active cards in room.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -332,6 +395,18 @@
                     <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" id="bot-enabled" style="width: 18px; height: 18px;">
                         <label for="bot-enabled" style="font-size: 14px; font-weight:bold;">Enable Ghost Bots</label>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 13px; color: var(--text-muted);">Default Ghost Users Count</label>
+                        <div style="display:flex; gap:6px; margin-top:6px; align-items:center;">
+                            <button class="btn btn-danger btn-sm" onclick="adjustGlobalBots(-10)">-10</button>
+                            <button class="btn btn-danger btn-sm" onclick="adjustGlobalBots(-5)">-5</button>
+                            <button class="btn btn-danger btn-sm" onclick="adjustGlobalBots(-1)">-1</button>
+                            <input type="number" id="bot-count-input" class="form-control" style="width:100px; text-align:center; font-weight:bold;" value="50">
+                            <button class="btn btn-success btn-sm" onclick="adjustGlobalBots(1)">+1</button>
+                            <button class="btn btn-success btn-sm" onclick="adjustGlobalBots(5)">+5</button>
+                            <button class="btn btn-success btn-sm" onclick="adjustGlobalBots(10)">+10</button>
+                        </div>
                     </div>
                     <div style="margin-bottom: 15px;">
                         <label style="font-size: 13px; color: var(--text-muted);">Bot Win Rate (%)</label>
@@ -677,7 +752,22 @@ async function loadGameStatus() {
             autoBtn.innerHTML = room.isAutoOn ? '<i class="fas fa-robot"></i> Auto: ON' : '<i class="fas fa-robot"></i> Auto: OFF';
             autoBtn.className = room.isAutoOn ? 'btn btn-success' : 'btn btn-warning';
 
-            // Active Players
+            // Update Pool & Bots Inputs
+            if (room.settings) {
+                const maxCardsInput = document.getElementById('adm-max-cards-input');
+                if (maxCardsInput && !maxCardsInput.matches(':focus')) {
+                    maxCardsInput.value = room.settings.maxCards || 500;
+                }
+                const botCountVal = room.settings.botCount !== undefined ? room.settings.botCount : 0;
+                const botsInput = document.getElementById('adm-bots-input');
+                if (botsInput && !botsInput.matches(':focus')) {
+                    botsInput.value = botCountVal;
+                }
+                const curBotsEl = document.getElementById('adm-current-bots');
+                if (curBotsEl) curBotsEl.innerText = botCountVal;
+            }
+
+            // Active Players List
             const plist = document.getElementById('active-players-list');
             if (room.takenCardsDetails) {
                 const playerMap = new Map();
@@ -689,18 +779,171 @@ async function loadGameStatus() {
                 Array.from(playerMap.entries()).forEach(([userId, info]) => {
                     let bgColor = info.isBot ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)';
                     let borderColor = info.isBot ? 'var(--blue)' : 'var(--primary)';
-                    let botBadge = info.isBot ? '<span style="font-size:9px; background:var(--blue); color:#fff; padding:1px 4px; border-radius:8px;">BOT</span>' : '';
+                    let botBadge = info.isBot 
+                        ? '<span style="font-size:9px; background:var(--blue); color:#fff; padding:1px 5px; border-radius:8px;">BOT</span>' 
+                        : '<span style="font-size:9px; background:var(--primary); color:#000; padding:1px 5px; border-radius:8px; font-weight:bold;">REAL</span>';
+                    
+                    let userAction = !info.isBot 
+                        ? `onclick="fetchAndOpenPlayer('${userId}')" style="cursor:pointer;" title="Click to view player profile"` 
+                        : '';
+
                     html += `
-                        <div style="background:${bgColor}; border:1px solid ${borderColor}; padding:8px 12px; border-radius:8px; min-width:140px;">
-                            <div style="font-weight:bold; font-size:12px;"><i class="fas fa-user"></i> ${escapeHtml(info.name)} ${botBadge}</div>
-                            <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">${info.cards.length} Cards (#${info.cards.slice(0,3).join(', ')})</div>
+                        <div ${userAction} style="background:${bgColor}; border:1px solid ${borderColor}; padding:8px 12px; border-radius:8px; min-width:150px; transition:0.2s;">
+                            <div style="font-weight:bold; font-size:12px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                                <span><i class="${info.isBot ? 'fas fa-robot' : 'fas fa-user'}"></i> ${escapeHtml(info.name)}</span>
+                                ${botBadge}
+                            </div>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+                                <b>${info.cards.length}</b> Cards (#${info.cards.slice(0, 4).join(', ')}${info.cards.length > 4 ? '...' : ''})
+                            </div>
                         </div>
                     `;
                 });
-                plist.innerHTML = html || '<span style="color:var(--text-muted);">No active cards in room.</span>';
+                plist.innerHTML = html || '<span style="color:var(--text-muted); font-size:12px;">No active players in room.</span>';
+            }
+
+            // Live Cartela Proximity & Completion Leaderboard (Closest to Win at Top)
+            const cartelaBody = document.getElementById('live-cartelas-table-body');
+            const nearWinBadge = document.getElementById('adm-near-win-badge');
+            if (cartelaBody && room.liveCardsLeaderboard) {
+                if (room.liveCardsLeaderboard.length === 0) {
+                    cartelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:18px;">No active cartelas in room. Start round to view live cards.</td></tr>';
+                    if (nearWinBadge) nearWinBadge.innerText = '0 Near Win';
+                } else {
+                    let rowsHtml = '';
+                    let nearWinCount = 0;
+
+                    room.liveCardsLeaderboard.forEach((c, idx) => {
+                        if (c.distance <= 2) nearWinCount++;
+                        
+                        let rankBadge = idx === 0 
+                            ? '<span style="font-weight:bold; color:var(--gold); font-size:14px;">🥇 1</span>'
+                            : idx === 1
+                            ? '<span style="font-weight:bold; color:#cbd5e1; font-size:14px;">🥈 2</span>'
+                            : idx === 2
+                            ? '<span style="font-weight:bold; color:#f59e0b; font-size:14px;">🥉 3</span>'
+                            : `<span style="color:var(--text-muted); font-size:12px;">#${idx + 1}</span>`;
+
+                        let typeBadge = c.isBot
+                            ? '<span class="badge" style="background:rgba(59,130,246,0.15); color:var(--blue); border:1px solid var(--blue); padding:2px 6px; border-radius:10px; font-size:10px; font-weight:bold;">🤖 BOT</span>'
+                            : '<span class="badge" style="background:rgba(16,185,129,0.15); color:var(--primary); border:1px solid var(--primary); padding:2px 6px; border-radius:10px; font-size:10px; font-weight:bold;">👤 REAL</span>';
+
+                        let statusBadge = '';
+                        if (c.distance === 0) {
+                            statusBadge = '<span style="background:var(--gold); color:#000; padding:3px 9px; border-radius:12px; font-weight:800; font-size:11px; box-shadow:0 0 10px rgba(250,204,21,0.6);">👑 BINGO!</span>';
+                        } else if (c.distance === 1) {
+                            statusBadge = '<span style="background:#ef4444; color:#fff; padding:3px 9px; border-radius:12px; font-weight:800; font-size:11px; box-shadow:0 0 8px rgba(239,68,68,0.6);"><i class="fas fa-fire"></i> 1 TO GO!</span>';
+                        } else if (c.distance === 2) {
+                            statusBadge = '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; border:1px solid #f59e0b; padding:3px 8px; border-radius:12px; font-weight:bold; font-size:11px;">⚡ 2 TO GO</span>';
+                        } else if (c.distance === 3) {
+                            statusBadge = '<span style="background:rgba(6,182,212,0.2); color:#06b6d4; border:1px solid #06b6d4; padding:3px 8px; border-radius:12px; font-weight:bold; font-size:11px;">🎯 3 TO GO</span>';
+                        } else {
+                            statusBadge = `<span style="color:var(--text-muted); font-size:11px;">${c.distance} TO GO</span>`;
+                        }
+
+                        let barColor = c.distance <= 1 ? '#ef4444' : (c.distance === 2 ? '#f59e0b' : 'var(--primary)');
+
+                        rowsHtml += `
+                            <tr style="${c.distance <= 1 ? 'background:rgba(239,68,68,0.06);' : ''}">
+                                <td>${rankBadge}</td>
+                                <td><span style="font-weight:bold; color:var(--gold); font-size:13px;">#${c.cardNum}</span></td>
+                                <td><span style="font-weight:600;">${escapeHtml(c.userName)}</span></td>
+                                <td>${typeBadge}</td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div style="flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; min-width:60px;">
+                                            <div style="width:${c.percent}%; height:100%; background:${barColor};"></div>
+                                        </div>
+                                        <span style="font-size:11px; font-weight:bold; color:var(--text); white-space:nowrap;">${c.matchedCount}/24 (${c.percent}%)</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-secondary btn-sm" style="padding:3px 8px; font-size:11px;" onclick="inspectSpecificCard(${c.cardNum}, '${escapeHtml(c.userName)}')"><i class="fas fa-eye"></i> View</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    cartelaBody.innerHTML = rowsHtml;
+                    if (nearWinBadge) {
+                        nearWinBadge.innerText = `${nearWinCount} Near Win`;
+                        nearWinBadge.style.display = nearWinCount > 0 ? 'inline-block' : 'none';
+                    }
+                }
             }
         }
     } catch(e) {}
+}
+
+async function setRoomMaxCardsPreset(num) {
+    document.getElementById('adm-max-cards-input').value = num;
+    await saveRoomMaxCards();
+}
+
+async function saveRoomMaxCards() {
+    const val = Number(document.getElementById('adm-max-cards-input').value);
+    if (!val || val < 20 || val > 1000) return showToast('Enter between 20 and 1000', true);
+    try {
+        const res = await apiFetch(`/api/admin/room/${currentAdminRoomId}/max-cards`, 'POST', { maxCards: val });
+        if (res.success) {
+            showToast(`Cartela pool set to ${val}!`);
+            loadGameStatus();
+        }
+    } catch(e) { showToast('Failed to set cartela pool', true); }
+}
+
+async function adjustRoomBots(delta) {
+    try {
+        const res = await apiFetch(`/api/admin/room/${currentAdminRoomId}/adjust-bots`, 'POST', { delta });
+        if (res.success) {
+            showToast(`Ghost bots adjusted to ${res.botCount}!`);
+            loadGameStatus();
+        }
+    } catch(e) { showToast('Bot adjust failed', true); }
+}
+
+async function saveRoomBotCount() {
+    const val = Number(document.getElementById('adm-bots-input').value);
+    if (isNaN(val) || val < 0) return showToast('Enter valid bot count', true);
+    try {
+        const res = await apiFetch(`/api/admin/room/${currentAdminRoomId}/adjust-bots`, 'POST', { botCount: val });
+        if (res.success) {
+            showToast(`Ghost bots set to ${res.botCount}!`);
+            loadGameStatus();
+        }
+    } catch(e) { showToast('Bot set failed', true); }
+}
+
+function adjustGlobalBots(delta) {
+    const el = document.getElementById('bot-count-input');
+    if (!el) return;
+    const val = Math.max(0, (Number(el.value) || 0) + delta);
+    el.value = val;
+}
+
+function inspectSpecificCard(cardNum, ownerName) {
+    const modalBody = document.getElementById('cards-modal-body');
+    document.getElementById('cards-modal-title').innerText = `Card #${cardNum} (${ownerName})`;
+    modalBody.innerHTML = '<div style="text-align:center; width:100%; color:var(--text-muted); padding:20px;">Generating card matrix...</div>';
+    document.getElementById('cards-modal').classList.add('active');
+
+    apiFetch(`/api/admin/game-status?roomId=${currentAdminRoomId}`).then(d => {
+        const calledNumbers = d.data?.calledNumbers || [];
+        const matrix = generateCardLayout(cardNum);
+        let html = `<div class="bingo-grid" style="margin: 0 auto; max-width: 320px;"><div style="text-align:center; color:var(--gold); margin-bottom:8px; font-weight:bold; font-size:14px;">CARD #${cardNum} - ${escapeHtml(ownerName)}</div><div class="grid-letters"><div style="background:#3b82f6;">B</div><div style="background:#ef4444;">I</div><div style="background:#10b981;">N</div><div style="background:#f59e0b;">G</div><div style="background:#8b5cf6;">O</div></div><div class="grid-cells">`;
+        for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+                let val = matrix[c][r];
+                let isCalled = calledNumbers.includes(val);
+                html += `<div class="grid-cell ${val === 'FREE' ? 'free' : (isCalled ? 'marked' : '')}">${val}</div>`;
+            }
+        }
+        html += `</div></div>`;
+        modalBody.innerHTML = html;
+    }).catch(() => {
+        modalBody.innerHTML = 'Failed to load card preview';
+    });
 }
 
 async function adminRoomAction(action) {
@@ -819,6 +1062,9 @@ async function loadBotSettings() {
             document.getElementById('bot-enabled').checked = d.data.botEnabled;
             document.getElementById('bot-win-rate').value = d.data.botWinRate;
             document.getElementById('bot-names').value = (d.data.botNames || []).join(', ');
+            if (document.getElementById('bot-count-input')) {
+                document.getElementById('bot-count-input').value = d.data.botCount || 50;
+            }
         }
     } catch(e) {}
 }
@@ -827,8 +1073,9 @@ async function saveBotSettings() {
     const enabled = document.getElementById('bot-enabled').checked;
     const winRate = Number(document.getElementById('bot-win-rate').value);
     const names = document.getElementById('bot-names').value.split(',').map(s => s.trim()).filter(s => s);
+    const botCount = Number(document.getElementById('bot-count-input')?.value || 50);
     try {
-        const res = await apiFetch('/api/admin/settings', 'POST', { botEnabled: enabled, botWinRate: winRate, botNames: names });
+        const res = await apiFetch('/api/admin/settings', 'POST', { botEnabled: enabled, botWinRate: winRate, botNames: names, botCount });
         if (res.success) showToast('Bot settings saved!');
     } catch(e) { showToast('Save failed', true); }
 }
@@ -1196,11 +1443,80 @@ async function saveGlobalSettings() {
     } catch(e) { showToast('Save failed', true); }
 }
 
-// ─── Notifications Polling ───
+// ─── Real-Time Notifications & Web Push ───
+let adminSocket = null;
+
+function initAdminRealtime() {
+    if (typeof io === 'undefined') return;
+    try {
+        const socketUrl = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : window.location.origin);
+        adminSocket = io(socketUrl, { transports: ['websocket', 'polling'] });
+        adminSocket.on('connect', () => {
+            if (AUTH_TOKEN) {
+                adminSocket.emit('admin_join', { auth: AUTH_TOKEN });
+            }
+        });
+        adminSocket.on('admin_new_transaction', (txn) => {
+            playTransactionChime();
+            showPushNotification(txn.type, txn.amount, txn.userName);
+            if (txn.type === 'deposit') {
+                const el = document.getElementById('notif-deposits');
+                if (el) {
+                    const c = (parseInt(el.innerText) || 0) + 1;
+                    el.innerText = c;
+                    el.classList.remove('hidden');
+                }
+                if (currentPage === 'deposits') loadTransactions('deposit');
+            } else if (txn.type === 'withdrawal') {
+                const el = document.getElementById('notif-withdrawals');
+                if (el) {
+                    const c = (parseInt(el.innerText) || 0) + 1;
+                    el.innerText = c;
+                    el.classList.remove('hidden');
+                }
+                if (currentPage === 'withdrawals') loadTransactions('withdrawal');
+            }
+            if (currentPage === 'dashboard') loadDashboardData();
+        });
+    } catch(e) {
+        console.warn('Admin realtime socket skipped:', e);
+    }
+}
+
+function playTransactionChime() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        osc.start(now);
+        osc.stop(now + 0.6);
+    } catch(e) {}
+}
+
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
 function startNotificationPolling() {
     if (pollInterval) clearInterval(pollInterval);
     checkNotifications();
     pollInterval = setInterval(checkNotifications, 10000);
+    initAdminRealtime();
+    requestNotificationPermission();
 }
 
 async function checkNotifications() {
@@ -1213,9 +1529,11 @@ async function checkNotifications() {
 
             if (d.data.pendingDeposits > lastPendingDeposits && lastPendingDeposits > 0) {
                 showPushNotification('deposit', d.data.pendingDepositAmount);
+                playTransactionChime();
             }
             if (d.data.pendingWithdrawals > lastPendingWithdrawals && lastPendingWithdrawals > 0) {
                 showPushNotification('withdrawal', d.data.pendingWithdrawalAmount);
+                playTransactionChime();
             }
             lastPendingDeposits = d.data.pendingDeposits;
             lastPendingWithdrawals = d.data.pendingWithdrawals;
@@ -1230,20 +1548,32 @@ function updateNotifBadge(id, count) {
     else el.classList.add('hidden');
 }
 
-function showPushNotification(type, amount) {
+function showPushNotification(type, amount, userName) {
     const c = document.getElementById('push-notification-container');
+    if (!c) return;
     const n = document.createElement('div');
     n.className = 'push-notification show';
     n.innerHTML = `
-        <div class="push-icon">${type==='deposit'?'💰':'💸'}</div>
+        <div class="push-icon">${type === 'deposit' ? '💰' : '💸'}</div>
         <div class="push-content">
-            <div class="push-title">New ${type==='deposit'?'Deposit':'Withdrawal'} Request!</div>
-            <div class="push-desc">Amount: ${Number(amount).toFixed(2)} ETB</div>
+            <div class="push-title">🔔 New ${type === 'deposit' ? 'Deposit' : 'Withdrawal'} Request!</div>
+            <div class="push-desc">${escapeHtml(userName || 'Player')} - ${Number(amount).toFixed(2)} ETB</div>
         </div>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto; padding:5px 10px;">View</button>
     `;
-    n.onclick = () => { switchPage(type==='deposit'?'deposits':'withdrawals'); n.remove(); };
+    n.onclick = () => { switchPage(type === 'deposit' ? 'deposits' : 'withdrawals'); n.remove(); };
     c.appendChild(n);
-    setTimeout(() => n.remove(), 6000);
+    setTimeout(() => { if (n.parentNode) n.remove(); }, 8000);
+
+    // Browser Push Notification (when tab is backgrounded)
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        try {
+            new Notification(`🔔 New ${type === 'deposit' ? 'Deposit' : 'Withdrawal'} (${Number(amount).toFixed(2)} ETB)`, {
+                body: `${userName || 'Player'} submitted a ${type} request. Click to review.`,
+                icon: 'https://cdn-icons-png.flaticon.com/512/2953/2953363.png'
+            });
+        } catch(e) {}
+    }
 }
 
 // Init

@@ -395,6 +395,24 @@ function getBotMainMenu(lang) {
     };
 }
 
+function notifyAdminTransaction(txn) {
+    try {
+        io.to('admin_stream').emit('admin_new_transaction', {
+            id: txn.id,
+            type: txn.type,
+            amount: txn.amount,
+            userName: txn.user_name || txn.userName || 'Player',
+            userId: String(txn.user_id || txn.userId),
+            phone: txn.phone || '',
+            reference: txn.reference || '',
+            status: txn.status || 'pending',
+            created: txn.created || new Date().toISOString()
+        });
+    } catch (e) {
+        console.error('notifyAdminTransaction error:', e.message);
+    }
+}
+
 const userConvState = new Map();
 
 async function handleTelegramUpdate(update) {
@@ -551,7 +569,7 @@ async function handleTelegramUpdate(update) {
                     }
 
                     const txnId = 'dep_' + Date.now();
-                    await Transaction.create({
+                    const newTxn = await Transaction.create({
                         id: txnId,
                         type: 'deposit',
                         user_id: userId,
@@ -562,6 +580,7 @@ async function handleTelegramUpdate(update) {
                         status: 'pending',
                         created: new Date().toISOString()
                     });
+                    notifyAdminTransaction(newTxn);
                     userConvState.delete(userId);
 
                     const successMsg = t('dep_success', { name: user.first_name || 'Player', method: 'Telebirr', amount: conv.amount });
@@ -591,7 +610,7 @@ async function handleTelegramUpdate(update) {
 
                         await User.updateOne({ id: userId }, { $inc: { win_balance: -amt } });
                         const txnId = 'wdr_' + Date.now();
-                        await Transaction.create({
+                        const newTxn = await Transaction.create({
                             id: txnId,
                             type: 'withdrawal',
                             user_id: userId,
@@ -602,6 +621,7 @@ async function handleTelegramUpdate(update) {
                             status: 'pending',
                             created: new Date().toISOString()
                         });
+                        notifyAdminTransaction(newTxn);
                         io.to(`user_${userId}`).emit('wallet_updated', {});
 
                         const successMsg = t('wd_success', { name: user.first_name || 'Player', method: conv.method, amount: amt, phone: conv.phone });
@@ -631,7 +651,7 @@ async function handleTelegramUpdate(update) {
 
                     await User.updateOne({ id: userId }, { $inc: { win_balance: -amt } });
                     const txnId = 'wdr_' + Date.now();
-                    await Transaction.create({
+                    const newTxn = await Transaction.create({
                         id: txnId,
                         type: 'withdrawal',
                         user_id: userId,
@@ -642,6 +662,7 @@ async function handleTelegramUpdate(update) {
                         status: 'pending',
                         created: new Date().toISOString()
                     });
+                    notifyAdminTransaction(newTxn);
                     io.to(`user_${userId}`).emit('wallet_updated', {});
 
                     const successMsg = t('wd_success', { name: user.first_name || 'Player', method: conv.method, amount: amt, phone });
@@ -1422,8 +1443,12 @@ async function endRoomRound(room, winnersData) {
             room.roundWinners = [];
             room.isEndingRound = false;
             emitRoom(room.id, 'reset_game', { roomId: room.id });
-            if (room.isRunning) startRoomRound(room);
-        }, 10000);
+            if (room.isAutoOn && room.isRunning) {
+                startRoomRound(room);
+            } else {
+                emitRoom(room.id, 'phase_change', { roomId: room.id, phase: 'waiting' });
+            }
+        }, 8000);
 
     } catch (err) {
         console.error(`❌ endRoomRound error for room ${room.id}:`, err);
@@ -1435,11 +1460,10 @@ Object.values(ROOM_DEFINITIONS).forEach(def => {
     rooms[def.id] = initRoom(def);
 });
 
-// Connect to MongoDB and Boot Rooms (with auto-retry and zero crash on boot)
+// Connect to MongoDB and Boot Rooms (Rooms remain in waiting until Admin initiates the first call activity)
 async function connectToMongo() {
     if (!MONGODB_URI) {
         console.error('❌ Cannot connect to MongoDB: MONGODB_URI is empty.');
-        Object.values(rooms).forEach(room => { if (room.isRunning) startRoomRound(room); });
         return;
     }
     try {
@@ -1457,14 +1481,14 @@ async function connectToMongo() {
             if (s.botNames && s.botNames.length > 0) room.settings.botNames = s.botNames;
             if (s.botEnabled !== undefined) room.settings.botEnabled = s.botEnabled;
             if (s.botWinRate !== undefined) room.settings.botWinRate = s.botWinRate;
-            if (room.isRunning) startRoomRound(room);
+            if (s.maxCards) room.settings.maxCards = s.maxCards;
+            room.phase = 'waiting';
         });
     } catch (err) {
         isDbConnected = false;
         dbErrorMsg = err.message;
         console.error('❌ MongoDB Connection Error:', err.message);
         console.error('👉 TIP: In MongoDB Atlas -> Network Access, ensure 0.0.0.0/0 (Allow access from anywhere) is added.');
-        Object.values(rooms).forEach(room => { if (room.isRunning) startRoomRound(room); });
         setTimeout(connectToMongo, 15000);
     }
 }
@@ -1535,6 +1559,11 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
             if (update.botEnabled !== undefined) r.settings.botEnabled = update.botEnabled;
             if (update.botWinRate) r.settings.botWinRate = Number(update.botWinRate);
             if (update.botNames) r.settings.botNames = update.botNames;
+            if (update.maxCards !== undefined) {
+                const mc = Math.max(20, Math.min(1000, Number(update.maxCards)));
+                r.settings.maxCards = mc;
+                emitRoom(r.id, 'sync_room_settings', { roomId: r.id, maxCards: mc });
+            }
         });
 
         const updatedSettings = await Settings.findOneAndUpdate({ key: 'payment_accounts' }, update, { upsert: true, new: true });
@@ -1551,6 +1580,29 @@ app.post('/api/admin/room/:roomId/start-game', adminAuth, (req, res) => {
     room.isForceWinActive = false;
     if (room.phase === 'waiting' || room.phase === 'gameover') startRoomRound(room);
     res.json({ success: true, roomId: room.id });
+});
+
+app.post('/api/admin/room/:roomId/max-cards', adminAuth, async (req, res) => {
+    const room = rooms[req.params.roomId] || rooms['classic_10'];
+    const maxCards = Math.max(20, Math.min(1000, Number(req.body.maxCards) || 500));
+    room.settings.maxCards = maxCards;
+    emitRoom(room.id, 'sync_room_settings', { roomId: room.id, maxCards });
+    try {
+        await Settings.updateOne({ key: 'payment_accounts' }, { maxCards });
+    } catch(e) {}
+    res.json({ success: true, maxCards: room.settings.maxCards, roomId: room.id });
+});
+
+app.post('/api/admin/room/:roomId/adjust-bots', adminAuth, async (req, res) => {
+    const room = rooms[req.params.roomId] || rooms['classic_10'];
+    let newCount = room.settings.botCount || 50;
+    if (req.body.delta !== undefined) {
+        newCount = Math.max(0, newCount + Number(req.body.delta));
+    } else if (req.body.botCount !== undefined) {
+        newCount = Math.max(0, Number(req.body.botCount));
+    }
+    room.settings.botCount = newCount;
+    res.json({ success: true, botCount: room.settings.botCount, roomId: room.id });
 });
 
 app.post('/api/admin/room/:roomId/stop-game', adminAuth, (req, res) => {
@@ -1583,6 +1635,14 @@ app.post('/api/admin/room/:roomId/toggle-force-win', adminAuth, (req, res) => {
 
 app.post('/api/admin/room/:roomId/call-number', adminAuth, async (req, res) => {
     const room = rooms[req.params.roomId] || rooms['classic_10'];
+    
+    // If room is in waiting or countdown phase, Admin can directly initiate calling!
+    if (room.phase === 'waiting' || room.phase === 'countdown') {
+        if (room.gameTimerInterval) { clearInterval(room.gameTimerInterval); room.gameTimerInterval = null; }
+        room.phase = 'calling';
+        emitRoom(room.id, 'phase_change', { roomId: room.id, phase: 'calling' });
+    }
+
     if (room.phase !== 'calling' || room.calledNumbers.length >= 75 || room.isEndingRound) {
         return res.status(400).json({ success: false, message: 'ጨዋታ አልተጀመረም ወይም አልቋል' });
     }
@@ -1706,17 +1766,64 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
         const room = rooms[roomId] || rooms['classic_10'];
 
         const realPlayersIds = [...new Set(Object.values(room.takenCards).filter(c => !c.isBot).map(c => c.userId))];
-        const realPlayers = await User.find({ id: { $in: realPlayersIds } }, { id: 1, name: 1 }).lean();
+        const realPlayers = await User.find({ id: { $in: realPlayersIds } }, { id: 1, name: 1, play_balance: 1, win_balance: 1 }).lean();
         const playerMap = new Map(realPlayers.map(p => [p.id, p.name]));
+        const playerBalanceMap = new Map(realPlayers.map(p => [p.id, { play: p.play_balance || 0, win: p.win_balance || 0 }]));
 
         const takenCardsDetails = {};
+        const calledSet = new Set(room.calledNumbers || []);
+        const liveCardsLeaderboard = [];
+        const playerMapSummary = new Map();
+
         for (const [card, data] of Object.entries(room.takenCards)) {
+            const cardNum = Number(card);
+            const pName = data.isBot ? data.botName : (playerMap.get(data.userId) || "Unknown");
             takenCardsDetails[card] = {
                 userId: data.userId,
-                userName: data.isBot ? data.botName : (playerMap.get(data.userId) || "Unknown"),
+                userName: pName,
                 isBot: !!data.isBot
             };
+
+            const distance = getCardDistance(cardNum, room.calledNumbers || []);
+            const cols = getCardCols(cardNum);
+            let matchedCount = 0;
+            cols.forEach(col => {
+                col.forEach(v => {
+                    if (v === 'FREE' || calledSet.has(v)) matchedCount++;
+                });
+            });
+            const percent = Math.min(100, Math.round((matchedCount / 24) * 100));
+
+            liveCardsLeaderboard.push({
+                cardNum,
+                userId: data.userId,
+                userName: pName,
+                isBot: !!data.isBot,
+                distance,
+                matchedCount,
+                percent,
+                cols
+            });
+
+            if (!playerMapSummary.has(data.userId)) {
+                playerMapSummary.set(data.userId, {
+                    userId: data.userId,
+                    name: pName,
+                    isBot: !!data.isBot,
+                    balances: playerBalanceMap.get(data.userId) || { play: 0, win: 0 },
+                    cards: []
+                });
+            }
+            playerMapSummary.get(data.userId).cards.push(cardNum);
         }
+
+        // Cartelas that complete more than the other appear at the top!
+        liveCardsLeaderboard.sort((a, b) => {
+            if (a.distance !== b.distance) return a.distance - b.distance;
+            return b.matchedCount - a.matchedCount;
+        });
+
+        const activePlayersList = Array.from(playerMapSummary.values());
 
         const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
         const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
@@ -1729,6 +1836,8 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
             data: {
                 ...room,
                 takenCardsDetails,
+                liveCardsLeaderboard,
+                activePlayersList,
                 totalPlayers: visualTotal,
                 realPlayersCount: realPlayersIds.length,
                 totalCards: Object.keys(room.takenCards).length,
@@ -2116,7 +2225,8 @@ app.post('/api/wallet/withdraw-request', async (req, res) => {
         const result = await User.findOneAndUpdate({ id: String(user.id), win_balance: { $gte: amt } }, { $inc: { win_balance: -amt } }, { new: true });
         if (!result) return res.status(400).json({ success: false, error: 'Insufficient win balance' });
         const txnId = 'wdr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-        await Transaction.create({ id: txnId, type: 'withdrawal', user_id: String(user.id), user_name: result.name || 'Unknown', amount: amt, method: 'telebirr', phone, status: 'pending', created: new Date().toISOString(), notified: false });
+        const newTxn = await Transaction.create({ id: txnId, type: 'withdrawal', user_id: String(user.id), user_name: result.name || 'Unknown', amount: amt, method: 'telebirr', phone, status: 'pending', created: new Date().toISOString(), notified: false });
+        notifyAdminTransaction(newTxn);
         io.to(`user_${user.id}`).emit('wallet_updated', {});
         res.json({ success: true, data: { txnId } });
     } catch (e) { res.status(500).json({ success: false }); }
@@ -2138,7 +2248,8 @@ app.post('/api/bot/create-txn', async (req, res) => {
             if (existingTxn) return res.status(400).json({ success: false, error: 'This Transaction ID has already been submitted!' });
         }
         const txnId = (type === 'deposit' ? 'dep_' : 'wdr_') + Date.now();
-        await Transaction.create({ id: txnId, type, user_id: String(user_id), user_name: user_name || 'Unknown', amount: amt, method: method || 'telebirr', reference: reference || '', phone: phone || '', status: 'pending', created: new Date().toISOString() });
+        const newTxn = await Transaction.create({ id: txnId, type, user_id: String(user_id), user_name: user_name || 'Unknown', amount: amt, method: method || 'telebirr', reference: reference || '', phone: phone || '', status: 'pending', created: new Date().toISOString() });
+        notifyAdminTransaction(newTxn);
         io.to(`user_${user_id}`).emit('wallet_updated', {});
         res.json({ success: true, txnId });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -2178,6 +2289,19 @@ app.post('/api/user/phone', async (req, res) => {
 // ─── Socket.IO Real-Time Communications ───
 io.on('connection', (socket) => {
     socket.currentRoomId = 'classic_10';
+
+    socket.on('admin_join', (payload) => {
+        if (payload?.auth) {
+            try {
+                const creds = Buffer.from(payload.auth.replace(/^Basic\s+/, ''), 'base64').toString().split(':');
+                if (creds[0] === ADMIN_USERNAME && creds[1] === ADMIN_PASSWORD) {
+                    socket.isAdmin = true;
+                    socket.join('admin_stream');
+                    socket.emit('admin_auth_success', { ok: true, message: 'Connected to Admin Realtime Stream' });
+                }
+            } catch(e) {}
+        }
+    });
 
     socket.on('join_room', (payload) => {
         const targetRoomId = (payload?.roomId && rooms[payload.roomId]) ? payload.roomId : 'classic_10';
@@ -2289,6 +2413,18 @@ io.on('connection', (socket) => {
             const cardPrice = room.cardPrice;
 
             if (data.action === 'select') {
+                // Ensure users choose only one room at a time
+                for (const [rId, otherRoom] of Object.entries(rooms)) {
+                    if (rId !== targetRoomId) {
+                        const hasActiveInOther = Object.values(otherRoom.takenCards).some(c => !c.isBot && String(c.userId) === String(socket.verifiedId));
+                        if (hasActiveInOther) {
+                            return socket.emit('card_error', {
+                                message: `❌ በአንድ ጊዜ በአንድ ክፍል ብቻ መጫወት ይችላሉ! እባክዎ በ${otherRoom.name} ያለዎትን ጨዋታ ይጨርሱ።`
+                            });
+                        }
+                    }
+                }
+
                 if (room.takenCards[cardNum]) return socket.emit('card_error', { message: '❌ ይህ ካርቴላ በሌላ ተጫዋች ተይዟል!' });
                 
                 let updated = await User.findOneAndUpdate(

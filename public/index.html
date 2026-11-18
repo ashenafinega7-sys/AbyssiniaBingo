@@ -969,7 +969,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
       <div class="quick-btns">
         <button class="quick-btn" onclick="quickSelect(1)"><i class="fas fa-dice-one"></i> +1</button>
         <button class="quick-btn" onclick="quickSelect(2)"><i class="fas fa-dice"></i> +2</button>
-        <button class="quick-btn" onclick="clearSelectedCards()"><i class="fas fa-times"></i> ጥራ</button>
+        <button class="quick-btn" onclick="clearSelectedCards()"><i class="fas fa-undo"></i> ሰርዝ</button>
       </div>
     </div>
 
@@ -1397,6 +1397,10 @@ function renderRoomBar() {
 
 function switchRoom(newRoomId) {
   if (currentRoomId === newRoomId) return;
+  if (selectedCards.size > 0) {
+    showFooterNotification(`❌ በአንድ ጊዜ በአንድ ክፍል ብቻ መጫወት ይችላሉ! እባክዎ በ${currentRoomId} ያለዎትን ጨዋታ ይጨርሱ።`);
+    return;
+  }
   currentRoomId = newRoomId;
   selectedCards.clear();
   calledNumbersSet.clear();
@@ -1888,7 +1892,9 @@ socket.on('init_state', (state) => {
     updateCalledNumbersUI(state.calledNumbers);
   }
 
-  if (state.remainingTime !== undefined) {
+  if (state.phase === 'waiting') {
+    document.getElementById('timer-val').innerText = 'Waiting';
+  } else if (state.remainingTime !== undefined) {
     document.getElementById('timer-val').innerText = state.remainingTime + 's';
   }
 
@@ -1927,6 +1933,12 @@ socket.on('room_switched', (state) => {
     if (selectedCards.has(i)) numberButtons[i].className = 'number-btn selected';
     else if (state.takenCards?.includes(i)) numberButtons[i].className = 'number-btn taken-by-other';
     else numberButtons[i].className = 'number-btn';
+  }
+
+  if (state.phase === 'waiting') {
+    document.getElementById('timer-val').innerText = 'Waiting';
+  } else if (state.remainingTime !== undefined) {
+    document.getElementById('timer-val').innerText = state.remainingTime + 's';
   }
 
   if (state.phase === 'calling') {
@@ -1970,6 +1982,17 @@ socket.on('phase_change', (data) => {
     renderLiveCards();
   } else if (data.phase === 'countdown') {
     switchTab('ticket');
+    showFooterNotification("ጨዋታው በቅርቡ ይጀምራል! ካርቴላ ይምረጡ።");
+  } else if (data.phase === 'waiting') {
+    document.getElementById('timer-val').innerText = 'Waiting';
+    showFooterNotification("🕒 በአስተዳዳሪው ጥሪ እስኪጀመር ድረስ በመጠበቅ ላይ...");
+  }
+});
+
+socket.on('sync_room_settings', (data) => {
+  if (data?.roomId === currentRoomId && data.maxCards) {
+    maxCards = data.maxCards;
+    initGrid();
   }
 });
 
