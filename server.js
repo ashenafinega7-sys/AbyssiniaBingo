@@ -254,7 +254,7 @@ const BOT_TEXTS = {
         wd_enter_phone: "📱 እባክዎ ወደሚወጣበትን የቴሌብር/ባንክ <b>ስልክ ቁጥር</b> ያስገቡ፦",
         wd_success: "✅ <b>የWithdraw ጥያቄዎ ተልኳል!</b>\n\n👤 ስም፦ {name}\n💳 አማራጭ፦ {method}\n💰 መጠን፦ {amount} ETB\n📱 ስልክ፦ {phone}\n\n⏳ <b>እባክዎ አድሚን እስኪያጸድቅ ይጠብቁ።</b>",
         bal_msg: "💵 <b>የሂሳብ ማጠቃለያ</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>አጠቃላይ ባላንስ፦ {total} ETB</b>",
-        invite_msg: "🔗 <b>የእርስዎ የግብዣ ሊንክ፦</b>\nhttps://t.me/Ethiobongo_bot?start={id}\n\n🎁 ወዳጅዎን ሲጋብዙ 30 ብር ያገኛሉ! ጓደኛዎም 20 ብር ያገኛል።",
+        invite_msg: "🔗 <b>የእርስዎ የግብዣ ሊንክ፦</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 ወዳጅዎን ሲጋብዙ 30 ብር ያገኛሉ! ጓደኛዎም 20 ብር ያገኛል።",
         support_msg: "💬 ማንኛውም ጥያቄ ካለዎት በ @Tazikes ያግኙን።",
         history_msg: "📜 ታሪክዎን ለማየት ከዚህ በታች ይጫኑ፦",
         help_msg: "📚 <b>የቦት ትዕዛዞች እና አጋዥ መረጃ</b>\n\n/start - ቦቱን እንደገና ለመጀመር\n/play - ጨዋታውን ለመጫወት\n/balance - ባላንስዎን ለማየት\n/deposit - ገንዘብ ለማስገባት\n/withdraw - ገንዘብ ለማውጣት\n/invite - የግብዣ ሊንክ ለማግኘት\n/support - እርዳታ ለማግኘት\n/lang - ቋንቋ ለመቀየር\n\n💡 <i>ማንኛውንም አዝራር በመጫን ቦቱን መጠቀም ይችላሉ።</i>",
@@ -289,7 +289,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>Choose a bank to withdraw:</b>", wd_enter_amt: "💸 Enter the amount (min 100 ETB):",
         wd_enter_phone: "📱 Enter the Phone number:", wd_success: "✅ <b>Withdraw Request Sent!</b>\n\n👤 Name: {name}\n💳 Method: {method}\n💰 Amount: {amount} ETB\n📱 Phone: {phone}\n\n⏳ <b>Wait for Admin approval.</b>",
         bal_msg: "💵 <b>Balance Summary</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>Total Balance: {total} ETB</b>",
-        invite_msg: "🔗 <b>Your Invite Link:</b>\nhttps://t.me/Ethiobongo_bot?start={id}\n\n🎁 Invite a friend and get 30 ETB! They get 20 ETB.",
+        invite_msg: "🔗 <b>Your Invite Link:</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 Invite a friend and get 30 ETB! They get 20 ETB.",
         support_msg: "💬 Contact @Tazikes.", history_msg: "📜 Click below to view your history:",
         help_msg: "📚 <b>Bot Commands</b>\n\n/start - Restart\n/play - Play\n/balance - Balance\n/deposit - Deposit\n/withdraw - Withdraw\n/invite - Invite\n/support - Support\n/lang - Language\n\n💡 <i>Use the buttons below.</i>",
         leaderboard_msg: "🏆 Click below to view the leaderboard:",
@@ -322,7 +322,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>ናብ ኣየናይ ባንክ ክትወጽኡ ትደልዩ?</b>", wd_enter_amt: "💸 እባክዎ ክትወጽኡ ትደልዩ መጠን ኣእትዉ (ዝቕነይ 100 ETB)፦",
         wd_enter_phone: "📱 እባክዎ ናይ ተሌፎን ቁጽሪ ኣእትዉ፦", wd_success: "✅ <b>ናይ Withdraw ሕቶኹም ተላኢኹ!</b>\n\n👤 ስም፦ {name}\n💳 ኣማራጺ፦ {method}\n💰 መጠን፦ {amount} ETB\n📱 ስልኪ፦ {phone}\n\n⏳ <b>ንኣድሚን ጽበዩ።</b>",
         bal_msg: "💵 <b>ናይ ሂሳብ ጥርዓን</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>ጠቕላላ ባላንስ፦ {total} ETB</b>",
-        invite_msg: "🔗 <b>ናይ ዕድመ ሊንክኩም፦</b>\nhttps://t.me/Ethiobongo_bot?start={id}\n\n🎁 ዓርኪኹም ምስ ትዕድሙ 30 ብር ትረኽቡ! ንሳቶም ድማ 20 ብር ይረኽቡ።",
+        invite_msg: "🔗 <b>ናይ ዕድመ ሊንክኩም፦</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 ዓርኪኹም ምስ ትዕድሙ 30 ብር ትረኽቡ! ንሳቶም ድማ 20 ብር ይረኽቡ።",
         support_msg: "💬 ዝኾነ ሕቶ እንተሎኩም ብ @Tazikes ርኸቡና።", history_msg: "📜 ታሪኽኩም ንምርኣይ ኣብ ታሕቲ ጠውቑ፦",
         help_msg: "📚 <b>ናይ ቦት ትእዛዛት</b>\n\n/start - ቦት ንምጅማር\n/play - ንምጽዋት\n/balance - ባላንስ\n/deposit - ኣታዊ\n/withdraw - ወጻኢ\n/invite - ዕድመ\n/support - ደገፍ\n/lang - ቋንቋ",
         leaderboard_msg: "🏆 ደረጃ ንምርኣይ ኣብ ታሕቲ ጠውቑ፦",
@@ -355,7 +355,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>Baankii baasii barbaaddan filadhaa:</b>", wd_enter_amt: "💸 Hanga baasii galchaa (xiqqaatee 100 ETB):",
         wd_enter_phone: "📱 Lakkoofsa bilbila galchaa:", wd_success: "✅ <b>Gaaffiin Baasii Ergameera!</b>\n\n👤 Maqaa: {name}\n💳 Mala: {method}\n💰 Hanga: {amount} ETB\n📱 Bilbila: {phone}\n\n⏳ <b>Admin eegaa.</b>",
         bal_msg: "💵 <b>Cuunfaa Hajaa</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>Hajaa Waliigalaa: {total} ETB</b>",
-        invite_msg: "🔗 <b>Liinkii Affeera Keessan:</b>\nhttps://t.me/Ethiobongo_bot?start={id}\n\n🎁 Hiriyyaa affeeruun 30 ETB argadhaa! Isaanis 20 ETB argatu.",
+        invite_msg: "🔗 <b>Liinkii Affeera Keessan:</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 Hiriyyaa affeeruun 30 ETB argadhaa! Isaanis 20 ETB argatu.",
         support_msg: "💬 Gaaffii yoo qabaattan @Tazikes qunnamaa.", history_msg: "📜 Seenaa keessan ilaaluuf gadii tuqaa:",
         help_msg: "📚 <b>Ajaja Bot</b>\n\n/start - Jalqabi\n/play - Taphadhu\n/balance - Hajaa\n/deposit - Galii\n/withdraw - Baasii\n/invite - Affeera\n/support - Deeggarsa\n/lang - Afaan",
         leaderboard_msg: "🏆 Sadarkaa ilaaluuf gadii tuqaa:",
@@ -982,11 +982,10 @@ const ROOM_DEFINITIONS = {
         badge: '10 ETB',
         cardPrice: 10,
         derashPerCard: 8,
-        maxCards: 500,
+        maxCards: 1000,
         countdownTime: 40,
         callInterval: 5,
         targetBots: 40,
-        visualPlayers: 100,
         minCardsToStart: 2,
         color: '#3b82f6'
     },
@@ -996,11 +995,10 @@ const ROOM_DEFINITIONS = {
         badge: '50 ETB',
         cardPrice: 50,
         derashPerCard: 40,
-        maxCards: 500,
+        maxCards: 1000,
         countdownTime: 45,
         callInterval: 5,
         targetBots: 30,
-        visualPlayers: 60,
         minCardsToStart: 2,
         color: '#facc15'
     },
@@ -1009,12 +1007,11 @@ const ROOM_DEFINITIONS = {
         name: 'VIP High Roller',
         badge: '100 ETB',
         cardPrice: 100,
-        derashPerCard: 85,
-        maxCards: 500,
+        derashPerCard: 80,
+        maxCards: 1000,
         countdownTime: 50,
         callInterval: 4,
         targetBots: 20,
-        visualPlayers: 40,
         minCardsToStart: 2,
         color: '#ec4899'
     }
@@ -1131,16 +1128,16 @@ function allocateRoomBots(room, count) {
 
     const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
     const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
-    const totalCards = Object.keys(room.takenCards).length;
-    const currentFake = Math.floor((botsCount / (targetBots || 1)) * (room.settings.visualPlayers || targetBots));
-    const totalPlayersDisplay = currentFake + realCardsCount;
+    const totalActualCards = realCardsCount + botsCount;
+    const totalPlayersDisplay = totalActualCards;
+    const derash = totalActualCards * room.derashPerCard;
 
     emitRoom(room.id, 'sync_taken_cards', {
         roomId: room.id,
         takenCards: Object.keys(room.takenCards).map(Number),
         totalPlayers: totalPlayersDisplay,
-        totalCards: totalCards,
-        derash: totalCards * room.derashPerCard
+        totalCards: totalActualCards,
+        derash: derash
     });
 }
 
@@ -1499,10 +1496,8 @@ app.get('/api/rooms', (req, res) => {
         const roomList = Object.values(rooms).map(r => {
             const realCardsCount = Object.values(r.takenCards).filter(c => !c.isBot).length;
             const botsCount = Object.values(r.takenCards).filter(c => c.isBot).length;
-            const targetBots = r.settings.botCount || 1;
-            const currentFake = Math.floor((botsCount / targetBots) * r.settings.visualPlayers);
-            const totalPlayers = currentFake + realCardsCount;
-            const totalCards = Object.keys(r.takenCards).length;
+            const totalCards = realCardsCount + botsCount;
+            const totalPlayers = totalCards;
             const derash = totalCards * r.derashPerCard;
 
             return {
@@ -1570,7 +1565,7 @@ app.post('/api/admin/room/:roomId/start-game', adminAuth, (req, res) => {
 
 app.post('/api/admin/room/:roomId/max-cards', adminAuth, async (req, res) => {
     const room = rooms[req.params.roomId] || rooms['classic_10'];
-    const maxCards = Math.max(20, Math.min(1000, Number(req.body.maxCards) || 500));
+    const maxCards = Math.max(20, Math.min(1000, Number(req.body.maxCards) || 1000));
     room.settings.maxCards = maxCards;
     emitRoom(room.id, 'sync_room_settings', { roomId: room.id, maxCards });
     try {
@@ -1826,24 +1821,48 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
 
         const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
         const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
-        const targetBots = room.settings.botCount || 1;
-        const currentFake = Math.floor((botsCount / targetBots) * room.settings.visualPlayers);
-        const visualTotal = currentFake + realCardsCount;
+        const totalActualCards = realCardsCount + botsCount;
+
+        const sanitizedRoom = {
+            id: room.id,
+            name: room.name,
+            phase: room.phase,
+            currentCall: room.currentCall,
+            calledNumbers: room.calledNumbers || [],
+            derashPerCard: room.derashPerCard,
+            cardPrice: room.cardPrice,
+            remainingTime: room.remainingTime,
+            isAutoOn: room.isAutoOn,
+            isRunning: room.isRunning,
+            isForceWinActive: room.isForceWinActive,
+            settings: {
+                callInterval: room.settings?.callInterval || 5,
+                maxCards: room.settings?.maxCards || 1000,
+                countdownTime: room.settings?.countdownTime || 40,
+                botEnabled: !!room.settings?.botEnabled,
+                botCount: room.settings?.botCount !== undefined ? room.settings.botCount : 40,
+                botWinRate: room.settings?.botWinRate !== undefined ? room.settings.botWinRate : 100
+            }
+        };
 
         res.json({
             success: true,
             data: {
-                ...room,
+                ...sanitizedRoom,
                 takenCardsDetails,
                 liveCardsLeaderboard,
                 activePlayersList,
-                totalPlayers: visualTotal,
+                totalPlayers: totalActualCards,
                 realPlayersCount: realPlayersIds.length,
-                totalCards: Object.keys(room.takenCards).length,
+                totalCards: totalActualCards,
+                derash: totalActualCards * (room.derashPerCard || 8),
                 rooms: Object.values(rooms).map(r => ({ id: r.id, name: r.name, phase: r.phase, cards: Object.keys(r.takenCards).length }))
             }
         });
-    } catch (e) { res.status(500).json({ success: false }); }
+    } catch (e) {
+        console.error('Error in /api/admin/game-status:', e);
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
 app.get('/api/admin/user-cards/:userId', adminAuth, async (req, res) => {
@@ -2475,9 +2494,7 @@ io.on('connection', (socket) => {
 
         const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
         const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
-        const targetBots = room.settings.botCount || 1;
-        const currentFake = Math.floor((botsCount / targetBots) * room.settings.visualPlayers);
-        const visualTotal = currentFake + realCardsCount;
+        const totalActualCards = realCardsCount + botsCount;
 
         socket.emit('init_state', {
             roomId: room.id,
@@ -2491,9 +2508,9 @@ io.on('connection', (socket) => {
             remainingTime: room.remainingTime,
             currentCall: room.currentCall,
             maxCards: room.settings.maxCards,
-            totalPlayers: visualTotal,
-            totalCards: Object.keys(room.takenCards).length,
-            derash: Object.keys(room.takenCards).length * room.derashPerCard
+            totalPlayers: totalActualCards,
+            totalCards: totalActualCards,
+            derash: totalActualCards * room.derashPerCard
         });
     });
 
@@ -2513,9 +2530,7 @@ io.on('connection', (socket) => {
 
         const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
         const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
-        const targetBots = room.settings.botCount || 1;
-        const currentFake = Math.floor((botsCount / targetBots) * room.settings.visualPlayers);
-        const visualTotal = currentFake + realCardsCount;
+        const totalActualCards = realCardsCount + botsCount;
 
         socket.emit('room_switched', {
             roomId: room.id,
@@ -2529,9 +2544,9 @@ io.on('connection', (socket) => {
             remainingTime: room.remainingTime,
             currentCall: room.currentCall,
             maxCards: room.settings.maxCards,
-            totalPlayers: visualTotal,
-            totalCards: Object.keys(room.takenCards).length,
-            derash: Object.keys(room.takenCards).length * room.derashPerCard
+            totalPlayers: totalActualCards,
+            totalCards: totalActualCards,
+            derash: totalActualCards * room.derashPerCard
         });
     });
 
@@ -2610,16 +2625,14 @@ io.on('connection', (socket) => {
 
             const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
             const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
-            const targetBots = room.settings.botCount || 1;
-            const currentFake = Math.floor((botsCount / targetBots) * room.settings.visualPlayers);
-            const visualTotal = currentFake + realCardsCount;
+            const totalActualCards = realCardsCount + botsCount;
 
             emitRoom(room.id, 'sync_taken_cards', {
                 roomId: room.id,
                 takenCards: Object.keys(room.takenCards).map(Number),
-                totalPlayers: visualTotal,
-                totalCards: Object.keys(room.takenCards).length,
-                derash: Object.keys(room.takenCards).length * room.derashPerCard
+                totalPlayers: totalActualCards,
+                totalCards: totalActualCards,
+                derash: totalActualCards * room.derashPerCard
             });
 
         } catch (err) {

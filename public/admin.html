@@ -106,6 +106,8 @@
     .stat-box-value.green { color: var(--primary); }
     .stat-box-value.gold { color: var(--gold); }
     .stat-box-value.blue { color: var(--blue); }
+    #adm-calls-display { transition: transform 0.2s ease, color 0.2s ease; }
+    .pulse-call { transform: scale(1.15); color: #38bdf8 !important; text-shadow: 0 0 12px rgba(56, 189, 248, 0.8); }
 
     /* Room Switcher Pills */
     .admin-room-bar {
@@ -280,8 +282,9 @@
                                 <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(100)">100</button>
                                 <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(200)">200</button>
                                 <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(500)">500</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 7px; font-size:11px;" onclick="setRoomMaxCardsPreset(1000)">1000</button>
                             </div>
-                            <input type="number" id="adm-max-cards-input" min="20" max="1000" placeholder="500" style="width:70px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:bold;">
+                            <input type="number" id="adm-max-cards-input" min="20" max="1000" placeholder="1000" style="width:70px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:bold;">
                             <button class="btn btn-primary btn-sm" onclick="saveRoomMaxCards()"><i class="fas fa-check"></i> Set Pool</button>
                         </div>
 
@@ -713,8 +716,16 @@ async function loadGameStatus() {
         if (d.success && d.data) {
             const room = d.data;
             document.getElementById('adm-game-phase').innerText = (room.phase || 'WAITING').toUpperCase();
-            document.getElementById('adm-calls-display').innerText = `${room.calledNumbers ? room.calledNumbers.length : 0} / ${room.currentCall || '--'}`;
-            document.getElementById('adm-cards-derash').innerText = `${room.totalCards || 0} / ${(room.totalCards || 0) * (room.derashPerCard || 8)} ETB`;
+            
+            const callCount = room.calledNumbers ? room.calledNumbers.length : 0;
+            const lastNum = room.currentCall || (room.calledNumbers && room.calledNumbers.length ? room.calledNumbers[room.calledNumbers.length - 1] : null);
+            let lastDisplay = '--';
+            if (lastNum) {
+                const prefix = lastNum <= 15 ? 'B' : lastNum <= 30 ? 'I' : lastNum <= 45 ? 'N' : lastNum <= 60 ? 'G' : 'O';
+                lastDisplay = `${prefix}-${lastNum}`;
+            }
+            document.getElementById('adm-calls-display').innerText = `${callCount} / ${lastDisplay}`;
+            document.getElementById('adm-cards-derash').innerText = `${room.totalCards || 0} / ${room.derash || ((room.totalCards || 0) * (room.derashPerCard || 8))} ETB`;
 
             const realCount = room.realPlayersCount || 0;
             const botCount = (room.totalPlayers || 0) - realCount;
@@ -1557,7 +1568,26 @@ function initAdminRealtime() {
         });
 
         // Real-Time Game Events Syncing directly from server
-        ['sync_taken_cards', 'new_number_called', 'phase_change', 'reset_game', 'game_over'].forEach(ev => {
+        adminSocket.on('new_number_called', (data) => {
+            if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+                const num = data.number;
+                const prefix = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
+                const count = data.allCalled ? data.allCalled.length : (data.callCount || 0);
+                const el = document.getElementById('adm-calls-display');
+                if (el) el.innerText = `${count} / ${prefix}-${num}`;
+                loadGameStatus();
+            }
+        });
+
+        adminSocket.on('reset_game', (data) => {
+            if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+                const el = document.getElementById('adm-calls-display');
+                if (el) el.innerText = '0 / --';
+                loadGameStatus();
+            }
+        });
+
+        ['sync_taken_cards', 'phase_change', 'game_over'].forEach(ev => {
             adminSocket.on(ev, (data) => {
                 if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
                     loadGameStatus();

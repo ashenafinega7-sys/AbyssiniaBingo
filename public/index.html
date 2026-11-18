@@ -1354,7 +1354,7 @@ let currentRoomId = 'classic_10';
 let activeRoomsList = [];
 let currentCardPrice = 10;
 let currentDerashPerCard = 8;
-let maxCards = 500;
+let maxCards = 1000;
 let currentWallet = 0, currentWinWallet = 0;
 let selectedCards = new Set();
 let calledNumbersSet = new Set();
@@ -1614,6 +1614,14 @@ function renderLiveCards() {
   }
 
   const cardsArr = [...selectedCards];
+  // Cartelas closest to Bingo (smallest distance to win) appear at the top in real-time!
+  cardsArr.sort((a, b) => {
+    const distA = cardDistances[a] !== undefined ? cardDistances[a] : 99;
+    const distB = cardDistances[b] !== undefined ? cardDistances[b] : 99;
+    if (distA !== distB) return distA - distB;
+    return a - b;
+  });
+
   cardsArr.forEach(cn => {
     const dist = cardDistances[cn];
     let badgeHtml = '';
@@ -1704,7 +1712,7 @@ async function loadWallet() {
       document.getElementById('profile-games-val').innerText = data.data.total_games || 0;
       document.getElementById('profile-wins-val').innerText = data.data.total_wins || 0;
       document.getElementById('profile-phone-val').innerText = data.data.phone || "አልተመዘገበም";
-      document.getElementById('invite-link-input').value = 'https://t.me/Ethiobongo_bot?start=' + userProfile.id;
+      document.getElementById('invite-link-input').value = 'https://t.me/abyssinia1bingobot?start=' + userProfile.id;
     }
   } catch (e) {}
 }
