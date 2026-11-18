@@ -917,13 +917,13 @@ function checkWinningLine(cardNum, calledNumbers) {
     const n = Number(cardNum); if (!Number.isFinite(n) || n < 1 || calledNumbers.length === 0) return null;
     const cols = getCardCols(n); const calledSet = new Set(calledNumbers); const m = [];
     for (let r = 0; r < 5; r++) { const row = []; for (let c = 0; c < 5; c++) { const val = cols[c][r]; row.push(val === 'FREE' || calledSet.has(val)); } m.push(row); }
-    for (let r = 0; r < 5; r++) if (m[r].every(v => v)) return { type: 'row', index: r, desc: 'Row ' + (r + 1) };
-    for (let c = 0; c < 5; c++) if (m.every(row => row[c])) return { type: 'col', index: c, desc: 'Col ' + (c + 1) };
+    for (let r = 0; r < 5; r++) if (m[r].every(v => v)) return { type: 'row', index: r, desc: 'Row ' + (r + 1), winningNumbers: [cols[0][r], cols[1][r], cols[2][r], cols[3][r], cols[4][r]] };
+    for (let c = 0; c < 5; c++) if (m.every(row => row[c])) return { type: 'col', index: c, desc: 'Col ' + (c + 1), winningNumbers: [cols[c][0], cols[c][1], cols[c][2], cols[c][3], cols[c][4]] };
     let d1 = true; for (let i = 0; i < 5; i++) if (!m[i][i]) { d1 = false; break; }
-    if (d1) return { type: 'diag1', desc: 'Diag 1' };
+    if (d1) return { type: 'diag1', desc: 'Diag 1', winningNumbers: [cols[0][0], cols[1][1], cols[2][2], cols[3][3], cols[4][4]] };
     let d2 = true; for (let i = 0; i < 5; i++) if (!m[i][4 - i]) { d2 = false; break; }
-    if (d2) return { type: 'diag2', desc: 'Diag 2' };
-    if (m[0][0] && m[0][4] && m[4][0] && m[4][4]) return { type: 'corners', desc: '4 Corners' };
+    if (d2) return { type: 'diag2', desc: 'Diag 2', winningNumbers: [cols[0][4], cols[1][3], cols[2][2], cols[3][1], cols[4][0]] };
+    if (m[0][0] && m[0][4] && m[4][0] && m[4][4]) return { type: 'corners', desc: '4 Corners', winningNumbers: [cols[0][0], cols[4][0], cols[0][4], cols[4][4]] };
     return null;
 }
 
@@ -974,69 +974,47 @@ function getCardDistance(cardNum, calledNumbers) {
     return minNeeded;
 }
 
-// ─── Multi-Room Configuration & Progressive Mega Jackpot ───
-let globalMegaJackpot = 5000;
-let jackpotCallThreshold = 48;
-let jackpotSeed = 2500;
-
+// ─── Multi-Room Configuration (10, 50, and 100 ETB Only) ───
 const ROOM_DEFINITIONS = {
     'classic_10': {
         id: 'classic_10',
         name: 'Classic Bingo',
-        badge: 'Standard',
+        badge: '10 ETB',
         cardPrice: 10,
         derashPerCard: 8,
-        jackpotContribution: 0,
         maxCards: 500,
         countdownTime: 40,
         callInterval: 5,
-        targetBots: 120,
-        visualPlayers: 180,
+        targetBots: 40,
+        visualPlayers: 100,
         minCardsToStart: 2,
         color: '#3b82f6'
     },
-    'mega_25': {
-        id: 'mega_25',
-        name: 'Silver Mega',
-        badge: 'Jackpot',
-        cardPrice: 25,
-        derashPerCard: 20,
-        jackpotContribution: 2,
+    'mega_50': {
+        id: 'mega_50',
+        name: 'Gold Bingo',
+        badge: '50 ETB',
+        cardPrice: 50,
+        derashPerCard: 40,
         maxCards: 500,
         countdownTime: 45,
         callInterval: 5,
-        targetBots: 80,
-        visualPlayers: 120,
-        minCardsToStart: 2,
-        color: '#06b6d4'
-    },
-    'mega_50': {
-        id: 'mega_50',
-        name: 'Gold Mega',
-        badge: 'Mega Jackpot',
-        cardPrice: 50,
-        derashPerCard: 40,
-        jackpotContribution: 4,
-        maxCards: 500,
-        countdownTime: 50,
-        callInterval: 5,
-        targetBots: 60,
-        visualPlayers: 90,
+        targetBots: 30,
+        visualPlayers: 60,
         minCardsToStart: 2,
         color: '#facc15'
     },
     'vip_100': {
         id: 'vip_100',
         name: 'VIP High Roller',
-        badge: 'High Stakes',
+        badge: '100 ETB',
         cardPrice: 100,
         derashPerCard: 85,
-        jackpotContribution: 6,
         maxCards: 500,
         countdownTime: 50,
         callInterval: 4,
-        targetBots: 40,
-        visualPlayers: 60,
+        targetBots: 20,
+        visualPlayers: 40,
         minCardsToStart: 2,
         color: '#ec4899'
     }
@@ -1052,7 +1030,6 @@ function initRoom(def) {
         color: def.color,
         cardPrice: def.cardPrice,
         derashPerCard: def.derashPerCard,
-        jackpotContribution: def.jackpotContribution,
         phase: 'waiting',
         currentCall: null,
         calledNumbers: [],
@@ -1236,12 +1213,13 @@ async function checkForAutoWinner(room, newNumber) {
 
     room.roundWinners = potentialWinners.map(p => ({
         id: p.userId,
-        name: p.isBot ? p.name : (userMap.get(p.userId) || 'Player'),
+        name: p.isBot ? p.name : (p.name || userMap.get(p.userId) || 'Player'),
         cardNum: p.cardNum,
         isBot: p.isBot,
         winDesc: p.win.desc,
         winType: p.win.type,
         winIndex: p.win.index,
+        winningNumbers: p.win.winningNumbers || [],
         allLines: [p.win]
     }));
 
@@ -1365,19 +1343,6 @@ async function endRoomRound(room, winnersData) {
         const totalCards = Object.keys(room.takenCards).length;
         const totalPrize = totalCards * room.derashPerCard;
 
-        // Progressive Jackpot evaluation
-        let isMegaJackpotWon = false;
-        let jackpotPayout = 0;
-        const callsCount = room.calledNumbers.length;
-
-        if (winnersData && winnersData.length > 0 && callsCount <= jackpotCallThreshold && room.jackpotContribution > 0) {
-            isMegaJackpotWon = true;
-            jackpotPayout = globalMegaJackpot;
-            globalMegaJackpot = jackpotSeed; // Reset pool
-            await Settings.updateOne({ key: 'payment_accounts' }, { mega_jackpot_pool: globalMegaJackpot });
-            io.emit('jackpot_updated', { pool: globalMegaJackpot });
-        }
-
         const promises = [];
         if (realPlayers.length > 0) {
             promises.push(User.updateMany({ id: { $in: realPlayers } }, { $inc: { total_games: 1 } }));
@@ -1400,14 +1365,20 @@ async function endRoomRound(room, winnersData) {
         }
 
         const realWinners = winnersData.filter(w => !w.isBot);
+        // Multi-winner support: Divide total derash amount equally by the number of winners
         const prizePerWinner = Math.floor(totalPrize / winnersData.length);
-        const jackpotPerWinner = isMegaJackpotWon ? Math.floor(jackpotPayout / winnersData.length) : 0;
 
         if (realWinners.length > 0) {
-            const winnerIds = realWinners.map(w => String(w.id));
-            promises.push(User.updateMany({ id: { $in: winnerIds } }, {
-                $inc: { win_balance: prizePerWinner + jackpotPerWinner, total_wins: 1 }
-            }));
+            const userWinningCards = {};
+            for (const w of realWinners) {
+                userWinningCards[w.id] = (userWinningCards[w.id] || 0) + 1;
+            }
+            for (const [uId, count] of Object.entries(userWinningCards)) {
+                promises.push(User.updateOne(
+                    { id: String(uId) },
+                    { $inc: { win_balance: prizePerWinner * count, total_wins: count } }
+                ));
+            }
         }
 
         promises.push(GameHistory.create({
@@ -1417,11 +1388,11 @@ async function endRoomRound(room, winnersData) {
                 id: w.id,
                 name: w.name,
                 cardNum: w.cardNum,
-                prize: prizePerWinner + jackpotPerWinner,
-                isJackpot: isMegaJackpotWon
+                prize: prizePerWinner,
+                isJackpot: false
             })),
-            totalPrize: totalPrize + jackpotPayout,
-            jackpotWon: jackpotPayout,
+            totalPrize: totalPrize,
+            jackpotWon: 0,
             totalPlayers: totalCards,
             calledNumbers: room.calledNumbers
         }));
@@ -1437,23 +1408,22 @@ async function endRoomRound(room, winnersData) {
         emitRoom(room.id, 'game_over', {
             roomId: room.id,
             reason: 'bingo',
-            winners: winnersData,
+            winners: winnersData.map(w => ({
+                id: w.id,
+                name: w.name,
+                cardNum: w.cardNum,
+                prize: prizePerWinner,
+                winDesc: w.winDesc,
+                winType: w.winType,
+                winIndex: w.winIndex,
+                winningNumbers: w.winningNumbers || [],
+                isBot: w.isBot
+            })),
             totalPrize,
             prizePerWinner,
-            isMegaJackpotWon,
-            jackpotPayout,
             lastCall,
             calledNumbers: room.calledNumbers
         });
-
-        if (isMegaJackpotWon) {
-            io.emit('mega_jackpot_won_announcement', {
-                roomId: room.id,
-                roomName: room.name,
-                jackpotPayout,
-                winners: winnersData.map(w => w.name)
-            });
-        }
 
         room.autoRestartTimer = setTimeout(() => {
             room.takenCards = {};
@@ -1494,9 +1464,6 @@ async function connectToMongo() {
         console.log('✅ MongoDB connected successfully');
         let s = await Settings.findOne({ key: 'payment_accounts' });
         if (!s) s = await Settings.create({ key: 'payment_accounts' });
-        if (s.mega_jackpot_pool) globalMegaJackpot = s.mega_jackpot_pool;
-        if (s.jackpot_call_threshold) jackpotCallThreshold = s.jackpot_call_threshold;
-        if (s.jackpot_seed) jackpotSeed = s.jackpot_seed;
 
         Object.values(rooms).forEach(room => {
             if (s.botNames && s.botNames.length > 0) room.settings.botNames = s.botNames;
@@ -1545,7 +1512,6 @@ app.get('/api/rooms', (req, res) => {
                 color: r.color,
                 cardPrice: r.cardPrice,
                 derashPerCard: r.derashPerCard,
-                jackpotContribution: r.jackpotContribution,
                 phase: r.phase,
                 remainingTime: r.remainingTime,
                 totalPlayers,
@@ -1557,9 +1523,7 @@ app.get('/api/rooms', (req, res) => {
 
         res.json({
             success: true,
-            rooms: roomList,
-            megaJackpot: globalMegaJackpot,
-            jackpotThreshold: jackpotCallThreshold
+            rooms: roomList
         });
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
@@ -1570,7 +1534,6 @@ app.get('/api/settings', async (req, res) => {
     try {
         let settings = await Settings.findOne({ key: 'payment_accounts' }).lean();
         if (!settings) settings = await Settings.create({ key: 'payment_accounts' });
-        settings.mega_jackpot_pool = globalMegaJackpot;
         res.json({ success: true, data: settings });
     } catch (e) { res.status(500).json({ success: false }); }
 });
@@ -1578,9 +1541,6 @@ app.get('/api/settings', async (req, res) => {
 app.post('/api/admin/settings', adminAuth, async (req, res) => {
     try {
         const update = req.body;
-        if (update.mega_jackpot_pool !== undefined) globalMegaJackpot = Number(update.mega_jackpot_pool);
-        if (update.jackpot_call_threshold !== undefined) jackpotCallThreshold = Number(update.jackpot_call_threshold);
-        if (update.jackpot_seed !== undefined) jackpotSeed = Number(update.jackpot_seed);
 
         Object.values(rooms).forEach(r => {
             if (update.botEnabled !== undefined) r.settings.botEnabled = update.botEnabled;
@@ -1595,7 +1555,6 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
 
         const updatedSettings = await Settings.findOneAndUpdate({ key: 'payment_accounts' }, update, { upsert: true, new: true });
         io.emit('settings_updated', { settings: updatedSettings });
-        io.emit('jackpot_updated', { pool: globalMegaJackpot });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
@@ -1881,7 +1840,6 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
                 totalPlayers: visualTotal,
                 realPlayersCount: realPlayersIds.length,
                 totalCards: Object.keys(room.takenCards).length,
-                megaJackpot: globalMegaJackpot,
                 rooms: Object.values(rooms).map(r => ({ id: r.id, name: r.name, phase: r.phase, cards: Object.keys(r.takenCards).length }))
             }
         });
@@ -1946,8 +1904,7 @@ app.get('/api/admin/dashboard', adminAuth, async (req, res) => {
                 weeklyDep: weeklyDep[0]?.total || 0, weeklyWd: weeklyWd[0]?.total || 0,
                 monthlyDep: monthlyDep[0]?.total || 0, monthlyWd: monthlyWd[0]?.total || 0,
                 pendingDepositAmount: pendingDepositAmount[0]?.total || 0,
-                pendingWithdrawalAmount: pendingWithdrawalAmount[0]?.total || 0,
-                megaJackpotPool: globalMegaJackpot
+                pendingWithdrawalAmount: pendingWithdrawalAmount[0]?.total || 0
             }
         });
     } catch (e) { res.status(500).json({ success: false }); }
@@ -2536,9 +2493,7 @@ io.on('connection', (socket) => {
             maxCards: room.settings.maxCards,
             totalPlayers: visualTotal,
             totalCards: Object.keys(room.takenCards).length,
-            derash: Object.keys(room.takenCards).length * room.derashPerCard,
-            megaJackpot: globalMegaJackpot,
-            jackpotThreshold: jackpotCallThreshold
+            derash: Object.keys(room.takenCards).length * room.derashPerCard
         });
     });
 
@@ -2576,8 +2531,7 @@ io.on('connection', (socket) => {
             maxCards: room.settings.maxCards,
             totalPlayers: visualTotal,
             totalCards: Object.keys(room.takenCards).length,
-            derash: Object.keys(room.takenCards).length * room.derashPerCard,
-            megaJackpot: globalMegaJackpot
+            derash: Object.keys(room.takenCards).length * room.derashPerCard
         });
     });
 
@@ -2627,12 +2581,6 @@ io.on('connection', (socket) => {
                 };
                 socket.emit('wallet_updated', {});
 
-                // If room contributes to Mega Jackpot, increment pool
-                if (room.jackpotContribution > 0) {
-                    globalMegaJackpot += room.jackpotContribution;
-                    io.emit('jackpot_updated', { pool: globalMegaJackpot });
-                }
-
                 const cardCols = getCardCols(cardNum);
                 cardCols.forEach(col => {
                     col.forEach(num => {
@@ -2648,11 +2596,6 @@ io.on('connection', (socket) => {
                     delete room.takenCards[cardNum];
                     await User.updateOne({ id: String(socket.verifiedId) }, { $inc: { play_balance: cardPrice } });
                     socket.emit('wallet_updated', {});
-
-                    if (room.jackpotContribution > 0) {
-                        globalMegaJackpot = Math.max(jackpotSeed, globalMegaJackpot - room.jackpotContribution);
-                        io.emit('jackpot_updated', { pool: globalMegaJackpot });
-                    }
 
                     const cardCols = getCardCols(cardNum);
                     cardCols.forEach(col => {

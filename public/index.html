@@ -2,9 +2,9 @@
 <html lang="am">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#070b14">
-<title>Abyssinia Mega Bingo</title>
+<title>Abyssinia Bingo</title>
 <script src="./config.js"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -100,9 +100,9 @@ body {
   text-shadow: 0 0 10px var(--gold-glow);
 }
 
-/* ─── Top Global Mega Header ─── */
+/* ─── Top Global Header (Jackpot Removed) ─── */
 .mega-header {
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -113,46 +113,29 @@ body {
 .brand-area {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .brand-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #facc15, #b45309);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   color: #000;
-  font-size: 16px;
-  box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+  font-size: 18px;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
 }
 .brand-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.5px;
   background: linear-gradient(90deg, #facc15, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.jackpot-ticker-badge {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.1));
-  border: 1px solid var(--gold);
-  padding: 4px 10px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  animation: glowPulse 2s infinite alternate;
-}
-@keyframes glowPulse {
-  0% { box-shadow: 0 0 5px rgba(250, 204, 21, 0.3); }
-  100% { box-shadow: 0 0 15px rgba(250, 204, 21, 0.7); }
-}
-.jackpot-label { font-size: 9px; color: var(--gold); font-weight: 800; text-transform: uppercase; }
-.jackpot-val { font-size: 13px; font-weight: 900; color: #fff; font-family: 'Courier New', monospace; }
 
 .header-user-wallet {
   display: flex;
@@ -162,27 +145,30 @@ body {
 .wallet-pill {
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid var(--glass-border);
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  transition: transform 0.2s;
 }
+.wallet-pill:active { transform: scale(0.95); }
 .wallet-pill i { color: var(--gold); font-size: 12px; }
 .wallet-pill span { font-weight: 800; font-size: 13px; color: var(--gold); }
 
 /* ─── Main Content Area ─── */
 .main-content-area {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 8px 8px calc(76px + env(safe-area-inset-bottom, 0px)) 8px;
   position: relative;
 }
 
-/* ─── Room Selection Drawer / Bar ─── */
+/* ─── Room Selection Drawer / Bar (10, 50, 100 Only) ─── */
 .room-bar {
   display: flex;
   gap: 6px;
@@ -194,8 +180,9 @@ body {
 }
 .room-bar::-webkit-scrollbar { display: none; }
 .room-pill-card {
-  flex-shrink: 0;
-  padding: 6px 12px;
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 10px;
   border-radius: 12px;
   background: var(--bg-card);
   border: 1px solid var(--glass-border);
@@ -211,7 +198,7 @@ body {
   box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
   transform: translateY(-2px);
 }
-.room-pill-card .r-icon { font-size: 14px; }
+.room-pill-card .r-icon { font-size: 16px; }
 .room-pill-card .r-info { display: flex; flex-direction: column; }
 .room-pill-card .r-name { font-size: 11px; font-weight: 800; color: #fff; }
 .room-pill-card .r-stake { font-size: 10px; color: var(--gold); font-weight: 700; }
@@ -280,13 +267,21 @@ body {
 }
 .quick-btn:active { transform: scale(0.95); }
 
-/* ─── Ticket Number Grid ─── */
+/* ─── Ticket Page & Scrollable Number Grid ─── */
+#page-ticket {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 .grid-wrapper {
   position: relative;
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .grid-container {
   display: grid;
@@ -294,7 +289,9 @@ body {
   gap: 6px;
   flex: 1;
   overflow-y: auto;
-  padding: 4px;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 4px 2px 24px 2px;
   align-content: start;
 }
 .grid-container.disabled { opacity: 0.3; pointer-events: none; }
@@ -392,7 +389,9 @@ body {
 #page-live {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 .live-top-bar {
   display: flex;
@@ -400,6 +399,7 @@ body {
   align-items: center;
   margin-bottom: 8px;
   gap: 8px;
+  flex-shrink: 0;
 }
 .live-stats-header {
   display: flex;
@@ -435,6 +435,7 @@ body {
   display: flex;
   gap: 8px;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 .bingo-board {
@@ -443,7 +444,8 @@ body {
   gap: 3px;
   padding: 6px;
   overflow-y: auto;
-  width: 38%;
+  -webkit-overflow-scrolling: touch;
+  width: 36%;
   background: #020617 !important;
   border: 2px solid #1e293b;
   border-radius: 10px;
@@ -476,11 +478,12 @@ body {
 }
 
 .right-panel {
-  width: 62%;
+  width: 64%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* ─── Current Call Ball Display ─── */
@@ -491,6 +494,7 @@ body {
   justify-content: space-between;
   align-items: center;
   border-radius: 12px;
+  flex-shrink: 0;
 }
 .call-left-section {
   display: flex;
@@ -499,8 +503,8 @@ body {
   width: 58%;
 }
 .current-call-ball {
-  width: 68px;
-  height: 68px;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8);
   color: white;
@@ -544,107 +548,25 @@ body {
   box-shadow: 0 2px 5px rgba(0,0,0,0.4);
 }
 
-/* ─── Auto-Daub & Card Tabs Bar ─── */
-.card-tools-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px;
-  background: rgba(15, 23, 42, 0.6);
-  border-radius: 8px;
-}
-.autodaub-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--gold);
-}
-.toggle-switch {
-  position: relative;
-  width: 36px;
-  height: 20px;
-}
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background-color: #334155;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: 0.3s;
-}
-input:checked + .toggle-slider { background-color: var(--emerald); }
-input:checked + .toggle-slider:before { transform: translateX(16px); }
-
-/* ─── Multi-Card Tabs Switcher ─── */
-.card-tabs-bar {
-  display: flex;
-  gap: 5px;
-  overflow-x: auto;
-  padding: 2px 0;
-  scrollbar-width: none;
-}
-.card-tabs-bar::-webkit-scrollbar { display: none; }
-.card-tab-btn {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid var(--glass-border);
-  color: var(--text-color);
-  font-size: 10px;
-  font-weight: 800;
-  padding: 4px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.card-tab-btn.active {
-  background: var(--gold);
-  color: #000;
-  border-color: #ca8a04;
-}
-.near-win-badge {
-  background: #ef4444;
-  color: #fff;
-  border-radius: 10px;
-  font-size: 9px;
-  padding: 1px 5px;
-  font-weight: 900;
-  animation: pulseGlow 1s infinite alternate;
-}
-@keyframes pulseGlow {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  100% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 8px #ef4444; }
-}
-
-/* ─── Interactive Live Card View ─── */
+/* ─── Multi-Card Live Cards Container (Scrollable) ─── */
 .live-cards-container {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 2px;
+  gap: 10px;
+  padding: 4px 2px 20px 2px;
 }
 .interactive-card-view {
-  background: var(--card-bg);
-  border-radius: 8px;
+  background: var(--bg-card);
+  border-radius: 10px;
   padding: 6px;
   border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
 }
 .card-header-letters {
   display: grid;
@@ -688,22 +610,67 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   transform: scale(1.02);
 }
 
+.near-win-badge {
+  background: #ef4444;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 9px;
+  padding: 1px 6px;
+  font-weight: 900;
+  animation: pulseGlow 1s infinite alternate;
+}
+@keyframes pulseGlow {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 8px #ef4444; }
+}
 
-
-/* ─── Bottom Navigation Bar ─── */
+/* ─── Redesigned Modern Glassmorphic Bottom Dock ─── */
+.bottom-dock-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 0 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px;
+  pointer-events: none;
+}
 .bottom-nav {
-  height: 60px;
+  position: relative;
+  pointer-events: auto;
+  height: 64px;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  background: rgba(15, 23, 42, 0.95);
-  flex-shrink: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.nav-sliding-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 20%;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+.nav-sliding-pill-inner {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 30%, rgba(251, 191, 36, 0.18), rgba(245, 158, 11, 0.03));
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.15);
 }
 .nav-item {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -711,14 +678,78 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted);
+  color: #94A3B8;
+  padding: 6px 0 4px 0;
+  gap: 2px;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item:active {
+  transform: scale(0.92);
+}
+.nav-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-svg {
+  width: 20px;
+  height: 20px;
+  stroke: #94A3B8;
+  transition: stroke 0.25s ease, filter 0.25s ease;
+}
+.nav-label {
   font-size: 10px;
   font-weight: 800;
-  gap: 3px;
-  transition: 0.2s;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #94A3B8;
+  transition: color 0.25s ease;
 }
-.nav-item.active { color: var(--gold); }
-.nav-icon { font-size: 18px; }
+.nav-indicator-dot {
+  width: 14px;
+  height: 3px;
+  border-radius: 4px;
+  background: transparent;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  margin-top: 1px;
+}
+.nav-item.active .nav-icon-wrapper {
+  transform: scale(1.1);
+}
+.nav-item.active .nav-icon-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.38) 0%, transparent 72%);
+  pointer-events: none;
+  z-index: -1;
+  animation: navPulse 2s infinite alternate;
+}
+@keyframes navPulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+.nav-item.active .nav-svg {
+  stroke: #FBBF24;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.7));
+}
+.nav-item.active .nav-label {
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+}
+.nav-item.active .nav-indicator-dot {
+  background: linear-gradient(90deg, #FBBF24, #F59E0B);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+}
 
 /* ─── Sub-Pages (Wallet, Profile, History, Rank) ─── */
 .page-inner-content {
@@ -727,6 +758,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   flex-direction: column;
   padding: 10px 14px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .sec-title {
   font-size: 14px;
@@ -808,6 +840,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   inset: 0;
   background: rgba(7, 11, 20, 0.95);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -817,34 +850,32 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   padding: 20px;
 }
 .game-over-title {
-  font-size: 36px;
+  font-size: 34px;
   color: var(--gold);
   font-weight: 900;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   text-shadow: 0 0 20px var(--gold-glow);
 }
-.mega-jackpot-winner-banner {
-  background: linear-gradient(135deg, #ef4444, #f59e0b);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 30px;
-  font-size: 16px;
-  font-weight: 900;
-  margin-bottom: 15px;
-  animation: pulseGlow 1.2s infinite alternate;
-}
-.winner-text { font-size: 18px; color: #fff; font-weight: 900; margin-bottom: 8px; text-align: center; }
-.prize-text { font-size: 28px; color: #10b981; font-weight: 900; margin-bottom: 16px; }
+.winner-text { font-size: 18px; color: #fff; font-weight: 900; margin-bottom: 8px; text-align: center; line-height: 1.4; }
+.prize-text { font-size: 26px; color: #10b981; font-weight: 900; margin-bottom: 14px; text-align: center; }
 
 .winning-card-wrapper {
   width: 100%;
-  max-width: 300px;
-  padding: 12px;
+  max-width: 320px;
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px;
+}
+.winning-card-item {
+  padding: 10px;
   background: #1e293b;
   border-radius: 12px;
   border: 2px solid var(--blue);
 }
-.winning-card-wrapper .winner-name {
+.winning-card-item .winner-name {
   text-align: center;
   color: var(--gold);
   font-weight: bold;
@@ -853,29 +884,40 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
 }
 .winning-matrix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
 .winning-cell {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   text-align: center;
   padding: 7px 0;
   font-size: 13px;
   color: #fff;
   border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 900;
+  transition: all 0.2s ease;
 }
-.winning-cell.called-cell { background: #3b82f6 !important; color: #fff !important; }
-.winning-cell.highlight {
-  background: var(--gold) !important;
+
+/* Distinctive Winner Cell Colors */
+.winning-cell.winning-line-cell {
+  background: linear-gradient(135deg, #facc15, #f59e0b) !important;
   color: #000 !important;
   font-weight: 900;
-  box-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+  border-color: #fff !important;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.95);
+  transform: scale(1.05);
+  z-index: 2;
+}
+.winning-cell.called-other-cell {
+  background: rgba(2, 132, 199, 0.3) !important;
+  color: #38bdf8 !important;
+  border: 1px solid #0284c7 !important;
+  font-weight: 800;
 }
 .winning-cell.last-call-blink {
   animation: pulseLastNum 1s infinite;
   border: 2px solid #fff;
 }
 @keyframes pulseLastNum {
-  0%, 100% { transform: scale(1); background: #10b981; }
-  50% { transform: scale(1.2); background: #34d399; box-shadow: 0 0 15px #34d399; }
+  0%, 100% { transform: scale(1.02); }
+  50% { transform: scale(1.15); box-shadow: 0 0 15px #38bdf8; }
 }
 
 .footer-notification {
@@ -891,21 +933,15 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
 <body>
 
 <div id="loading-screen">
-    <div class="loader-spinner"></div>
-    <div class="loader-text">ABYSSINIA BINGO</div>
+  <div class="loader-spinner"></div>
+  <div class="loader-text">ABYSSINIA BINGO</div>
 </div>
 
 <!-- ─── Top Global Mega Header ─── -->
 <header class="mega-header">
   <div class="brand-area">
     <div class="brand-icon">B</div>
-    <div class="brand-title">ABYSSINIA</div>
-  </div>
-
-  <div class="jackpot-ticker-badge" onclick="showJackpotDetails()">
-    <i class="fas fa-crown" style="color:var(--gold); font-size:11px;"></i>
-    <span class="jackpot-label">MEGA JACKPOT:</span>
-    <span class="jackpot-val" id="top-mega-jackpot-val">5,000</span>
+    <div class="brand-title">ABYSSINIA BINGO</div>
   </div>
 
   <div class="header-user-wallet" onclick="switchTab('wallet')">
@@ -920,7 +956,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
 
   <!-- ─── Ticket Page ─── -->
   <div id="page-ticket">
-    <!-- Room Selector Carousel -->
+    <!-- Room Selector Carousel (10, 50, 100 Only) -->
     <div class="room-bar" id="room-bar-container"></div>
 
     <!-- Top Dashboard Stats -->
@@ -941,7 +977,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
       </div>
     </div>
 
-    <!-- Cartela Numbers Grid -->
+    <!-- Cartela Numbers Grid (Fully Touch Scrollable) -->
     <div class="grid-wrapper">
       <div class="grid-container" id="number-grid"></div>
       <div class="disabled-msg hidden" id="no-balance-msg">በቂ የመጫወቻ ገንዘብ የለዎትም! እባክዎ ገቢ (Deposit) ያድርጉ።</div>
@@ -981,20 +1017,8 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
           </div>
         </div>
 
-        <!-- Auto-Daub & Card Switcher Bar -->
-        <div class="card-tools-bar glass-panel">
-          <div class="autodaub-toggle">
-            <label class="toggle-switch">
-              <input type="checkbox" id="autodaub-toggle-checkbox" checked onchange="toggleAutoDaub()">
-              <span class="toggle-slider"></span>
-            </label>
-            <span>Auto-Daub</span>
-          </div>
-          <div class="card-tabs-bar" id="live-card-tabs-bar"></div>
-        </div>
-
-        <!-- Live Cards Container -->
-        <div class="live-cards-container glass-panel" id="live-cards-container"></div>
+        <!-- Live Cards Container (All Selected Cards Rendered, Touch Scrollable) -->
+        <div class="live-cards-container" id="live-cards-container"></div>
       </div>
     </div>
   </div>
@@ -1106,21 +1130,78 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
 
 </div>
 
-<!-- ─── Bottom Navigation Bar ─── -->
-<nav class="bottom-nav glass-panel">
-  <button class="nav-item active" id="nav-btn-ticket" onclick="switchTab('ticket')"><span class="nav-icon"><i class="fas fa-gamepad"></i></span><span>BINGO</span></button>
-  <button class="nav-item" id="nav-btn-wallet" onclick="switchTab('wallet')"><span class="nav-icon"><i class="fas fa-wallet"></i></span><span>WALLET</span></button>
-  <button class="nav-item" id="nav-btn-history" onclick="switchTab('history')"><span class="nav-icon"><i class="fas fa-clock"></i></span><span>HISTORY</span></button>
-  <button class="nav-item" id="nav-btn-rank" onclick="switchTab('rank')"><span class="nav-icon"><i class="fas fa-award"></i></span><span>RANK</span></button>
-  <button class="nav-item" id="nav-btn-profile" onclick="switchTab('profile')"><span class="nav-icon"><i class="fas fa-user"></i></span><span>PROFILE</span></button>
+<!-- ─── Redesigned Bottom Navigation Dock ─── -->
+<nav class="bottom-dock-wrapper">
+  <div class="bottom-nav">
+    <div class="nav-sliding-pill" id="nav-sliding-pill"><div class="nav-sliding-pill-inner"></div></div>
+    
+    <button class="nav-item active" id="nav-btn-ticket" onclick="switchTab('ticket')">
+      <div class="nav-icon-wrapper">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="6" x2="10" y1="12" y2="12"></line>
+          <line x1="8" x2="8" y1="10" y2="14"></line>
+          <line x1="15" x2="15.01" y1="13" y2="13"></line>
+          <line x1="18" x2="18.01" y1="11" y2="11"></line>
+          <rect width="20" height="12" x="2" y="6" rx="6"></rect>
+        </svg>
+      </div>
+      <span class="nav-label">BINGO</span>
+      <span class="nav-indicator-dot"></span>
+    </button>
+
+    <button class="nav-item" id="nav-btn-wallet" onclick="switchTab('wallet')">
+      <div class="nav-icon-wrapper">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path>
+          <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path>
+        </svg>
+      </div>
+      <span class="nav-label">WALLET</span>
+      <span class="nav-indicator-dot"></span>
+    </button>
+
+    <button class="nav-item" id="nav-btn-history" onclick="switchTab('history')">
+      <div class="nav-icon-wrapper">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <span class="nav-label">HISTORY</span>
+      <span class="nav-indicator-dot"></span>
+    </button>
+
+    <button class="nav-item" id="nav-btn-rank" onclick="switchTab('rank')">
+      <div class="nav-icon-wrapper">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+          <path d="M4 22h16"></path>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+        </svg>
+      </div>
+      <span class="nav-label">RANK</span>
+      <span class="nav-indicator-dot"></span>
+    </button>
+
+    <button class="nav-item" id="nav-btn-profile" onclick="switchTab('profile')">
+      <div class="nav-icon-wrapper">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
+      <span class="nav-label">PROFILE</span>
+      <span class="nav-indicator-dot"></span>
+    </button>
+  </div>
 </nav>
 
 <!-- ─── Game Over Celebration Overlay ─── -->
 <div id="game-over-overlay" class="hidden">
   <div class="game-over-title">🏆 BINGO! 🏆</div>
-  <div id="jackpot-alert-box" class="mega-jackpot-winner-banner hidden">
-    ⚡ MEGA JACKPOT WON! ⚡
-  </div>
   <div class="winner-text" id="winner-text">--</div>
   <div class="prize-text" id="prize-text">0 ETB</div>
   <div class="winning-card-wrapper" id="winning-card-container"></div>
@@ -1171,7 +1252,6 @@ window.fetch = function(url, opts = {}) {
 
 // ─── Sound & Web Audio System ───
 let isVoiceEnabled = localStorage.getItem('abisinya_voice') !== 'off';
-let isAutoDaub = localStorage.getItem('abisinya_autodaub') !== 'off';
 let currentAudio = null;
 let audioUnlocked = false;
 
@@ -1229,12 +1309,6 @@ function toggleVoice() {
   }
 }
 
-function toggleAutoDaub() {
-  const cb = document.getElementById('autodaub-toggle-checkbox');
-  isAutoDaub = cb.checked;
-  localStorage.setItem('abisinya_autodaub', isAutoDaub ? 'on' : 'off');
-}
-
 function speakNumber(num) {
   if (!isVoiceEnabled) return;
   if (currentAudio) {
@@ -1247,7 +1321,6 @@ function speakNumber(num) {
     audio.volume = 1.0;
     currentAudio = audio;
     audio.play().catch(e => {
-      // Fallback synth
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
@@ -1286,7 +1359,6 @@ let currentWallet = 0, currentWinWallet = 0;
 let selectedCards = new Set();
 let calledNumbersSet = new Set();
 let gamePhase = 'waiting';
-let activeCardInView = null; // Currently viewed card in live screen
 let numberButtons = [];
 let notificationTimeout = null;
 let cardDistances = {};
@@ -1320,14 +1392,13 @@ function generateCardLayout(cn) {
 function getColumnLetter(num) { return num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O'; }
 function getColumnColor(num) { return num <= 15 ? '#3b82f6' : num <= 30 ? '#ef4444' : num <= 45 ? '#10b981' : num <= 60 ? '#f59e0b' : '#8b5cf6'; }
 
-// ─── Room Bar UI ───
+// ─── Room Bar UI (10, 50, 100 ETB Only) ───
 async function loadRooms() {
   try {
     const res = await fetch('/api/rooms');
     const data = await res.json();
     if (data.success && data.rooms) {
-      activeRoomsList = data.rooms;
-      document.getElementById('top-mega-jackpot-val').innerText = (data.megaJackpot || 5000).toLocaleString();
+      activeRoomsList = data.rooms.filter(r => ['classic_10', 'mega_50', 'vip_100'].includes(r.id));
       renderRoomBar();
     }
   } catch (e) {}
@@ -1366,7 +1437,7 @@ function switchRoom(newRoomId) {
   socket.emit('switch_room', { roomId: newRoomId });
 }
 
-// ─── Grid & Card Selection ───
+// ─── Grid & Card Selection (Smooth Touch Scrolling) ───
 function initGrid() {
   const grid = document.getElementById('number-grid');
   if (!grid) return;
@@ -1531,10 +1602,10 @@ function updateCalledNumbersUI(allCalled) {
   });
 }
 
+// ─── Multi-Cartela Live Display (With Smooth Scrolling & Always Auto-Marked) ───
 function renderLiveCards() {
-  const tabsBar = document.getElementById('live-card-tabs-bar');
   const container = document.getElementById('live-cards-container');
-  tabsBar.innerHTML = '';
+  if (!container) return;
   container.innerHTML = '';
 
   if (selectedCards.size === 0) {
@@ -1543,50 +1614,40 @@ function renderLiveCards() {
   }
 
   const cardsArr = [...selectedCards];
-  if (!activeCardInView || !selectedCards.has(activeCardInView)) {
-    activeCardInView = cardsArr[0];
-  }
-
-  // Render Card Switcher Tabs
   cardsArr.forEach(cn => {
-    const btn = document.createElement('button');
     const dist = cardDistances[cn];
     let badgeHtml = '';
     if (dist === 1) badgeHtml = `<span class="near-win-badge">1 የቀረው!</span>`;
-    else if (dist === 2) badgeHtml = `<span style="font-size:9px; color:var(--emerald);">2 የቀረው</span>`;
+    else if (dist === 2) badgeHtml = `<span style="font-size:9px; color:var(--emerald); font-weight:800; background:rgba(16,185,129,0.15); border:1px solid var(--emerald); padding:1px 6px; border-radius:10px;">2 የቀረው</span>`;
 
-    btn.className = `card-tab-btn ${cn === activeCardInView ? 'active' : ''}`;
-    btn.innerHTML = `<span>#${cn}</span> ${badgeHtml}`;
-    btn.onclick = () => {
-      activeCardInView = cn;
-      renderLiveCards();
-    };
-    tabsBar.appendChild(btn);
-  });
+    const cols = generateCardLayout(cn);
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'interactive-card-view';
+    
+    let headerLettersHtml = `<div class="card-header-letters"><div class="h-B">B</div><div class="h-I">I</div><div class="h-N">N</div><div class="h-G">G</div><div class="h-O">O</div></div>`;
+    let matrixHtml = `<div class="interactive-matrix">`;
 
-  // Render Matrix for activeCardInView
-  const cn = activeCardInView;
-  const cols = generateCardLayout(cn);
-  const cardDiv = document.createElement('div');
-  cardDiv.className = 'interactive-card-view';
-  
-  let headerLettersHtml = `<div class="card-header-letters"><div class="h-B">B</div><div class="h-I">I</div><div class="h-N">N</div><div class="h-G">G</div><div class="h-O">O</div></div>`;
-  let matrixHtml = `<div class="interactive-matrix">`;
-
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const v = cols[c][r];
-      const isFree = v === 'FREE';
-      const isCalled = !isFree && calledNumbersSet.has(v);
-      let cls = 'interactive-cell';
-      if (isFree) cls += ' free';
-      else if (isCalled && isAutoDaub) cls += ' marked-cell';
-      matrixHtml += `<div class="${cls}" onclick="manualDaubCell(this, ${v})">${isFree ? 'FREE' : v}</div>`;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const v = cols[c][r];
+        const isFree = v === 'FREE';
+        const isCalled = !isFree && calledNumbersSet.has(v);
+        let cls = 'interactive-cell';
+        if (isFree) cls += ' free';
+        else if (isCalled) cls += ' marked-cell';
+        matrixHtml += `<div class="${cls}" onclick="manualDaubCell(this, ${v})">${isFree ? 'FREE' : v}</div>`;
+      }
     }
-  }
-  matrixHtml += `</div>`;
-  cardDiv.innerHTML = `<div style="text-align:center; font-size:11px; font-weight:900; color:var(--gold); margin-bottom:4px;">CARD #${cn}</div>` + headerLettersHtml + matrixHtml;
-  container.appendChild(cardDiv);
+    matrixHtml += `</div>`;
+    cardDiv.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; padding:0 2px;">
+        <span style="font-size:12px; font-weight:900; color:var(--gold); letter-spacing:0.5px;">CARD #${cn}</span>
+        ${badgeHtml}
+      </div>
+    ` + headerLettersHtml + matrixHtml;
+
+    container.appendChild(cardDiv);
+  });
 }
 
 function manualDaubCell(el, val) {
@@ -1597,7 +1658,16 @@ function manualDaubCell(el, val) {
   }
 }
 
-// ─── Tab Navigation ───
+// ─── Tab Navigation & Smooth Dock Sliding ───
+const tabIndexMap = { ticket: 0, live: 0, wallet: 1, history: 2, rank: 3, profile: 4 };
+
+function updateNavPill(tabName) {
+  const pill = document.getElementById('nav-sliding-pill');
+  if (!pill) return;
+  const idx = tabIndexMap[tabName] ?? 0;
+  pill.style.transform = `translateX(${idx * 100}%)`;
+}
+
 window.switchTab = function(tabName) {
   if (gamePhase === 'calling' && tabName === 'ticket') tabName = 'live';
   ['ticket', 'profile', 'wallet', 'rank', 'history', 'live'].forEach(t => {
@@ -1607,9 +1677,12 @@ window.switchTab = function(tabName) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   const target = document.getElementById('page-' + tabName);
   if (target) target.classList.remove('hidden');
+  
   const navName = (tabName === 'live') ? 'ticket' : tabName;
   const nb = document.getElementById('nav-btn-' + navName);
   if (nb) nb.classList.add('active');
+
+  updateNavPill(navName);
 
   if (tabName === 'wallet') loadWallet();
   if (tabName === 'history') loadHistory();
@@ -1787,10 +1860,6 @@ function showFooterNotification(msg) {
   notificationTimeout = setTimeout(() => { n.innerText = ''; }, 3000);
 }
 
-function showJackpotDetails() {
-  alert(`👑 ABYSSINIA MEGA JACKPOT 👑\n\nከ 48 ጥሪዎች በፊት BINGO የሚል ተጫዋች ሙሉውን የሜጋ ጃክፖት ሽልማት ይወስዳል!`);
-}
-
 // ─── Socket.IO Real-Time Engine ───
 const socket = io(typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : '', { transports: ['websocket', 'polling'] });
 
@@ -1816,10 +1885,6 @@ socket.on('init_state', (state) => {
   document.getElementById('derash-val-top').innerText = state.derash || 0;
   document.getElementById('players-val').innerText = state.totalPlayers || 0;
   document.getElementById('derash-val').innerText = state.derash || 0;
-
-  if (state.megaJackpot) {
-    document.getElementById('top-mega-jackpot-val').innerText = Number(state.megaJackpot).toLocaleString();
-  }
 
   for (let i = 1; i <= maxCards; i++) {
     if (!numberButtons[i]) continue;
@@ -1959,12 +2024,6 @@ socket.on('my_cards_distance', (data) => {
   renderLiveCards();
 });
 
-
-
-socket.on('jackpot_updated', (data) => {
-  document.getElementById('top-mega-jackpot-val').innerText = Number(data.pool).toLocaleString();
-});
-
 socket.on('reset_game', (data) => {
   if (data?.roomId && data.roomId !== currentRoomId) return;
   selectedCards.clear();
@@ -1982,48 +2041,70 @@ socket.on('reset_game', (data) => {
   loadWallet();
 });
 
+// ─── Game Over Event (Multi-Winner & Distinct Cell Colors) ───
 socket.on('game_over', (data) => {
   if (data.roomId && data.roomId !== currentRoomId) return;
   const isMeWinner = data.winners.some(w => String(w.id) === String(userProfile.id));
   const winnerNamesList = data.winners.map(w => `${w.name} #${w.cardNum}`).join(', ');
 
-  document.getElementById('winner-text').innerHTML = `${data.winners.length} ተጫዋቾች አሸንፈዋል!<br><span style="font-size:13px; color:#cbd5e1;">${winnerNamesList}</span>`;
-  document.getElementById('prize-text').innerText = data.totalPrize + ' ETB';
+  const totalPrize = data.totalPrize || 0;
+  const prizePerWinner = data.prizePerWinner || Math.floor(totalPrize / (data.winners.length || 1));
 
-  if (data.isMegaJackpotWon) {
-    document.getElementById('jackpot-alert-box').classList.remove('hidden');
-    document.getElementById('prize-text').innerText += ` (+ Jackpot: ${data.jackpotPayout} ETB)`;
+  if (data.winners.length > 1) {
+    document.getElementById('winner-text').innerHTML = `${data.winners.length} ተጫዋቾች አሸንፈዋል!<br><span style="font-size:12px; color:#cbd5e1;">${winnerNamesList}</span>`;
+    document.getElementById('prize-text').innerHTML = `${totalPrize} ETB <span style="font-size:13px; color:#94a3b8; display:block; margin-top:3px;">(ለአንድ አሸናፊ: ${prizePerWinner} ETB)</span>`;
   } else {
-    document.getElementById('jackpot-alert-box').classList.add('hidden');
+    document.getElementById('winner-text').innerHTML = `አሸናፊ፦ ${winnerNamesList}`;
+    document.getElementById('prize-text').innerText = `${totalPrize} ETB`;
   }
 
   if (isMeWinner) {
-    document.getElementById('winner-text').innerHTML = `🎉 እንኳን ደስ አለዎት! አሸንፈዋል! 🎉<br><span style="font-size:13px; color:#cbd5e1;">${winnerNamesList}</span>`;
+    const myWinningCount = data.winners.filter(w => String(w.id) === String(userProfile.id)).length;
+    const myShare = myWinningCount * prizePerWinner;
+    document.getElementById('winner-text').innerHTML = `🎉 እንኳን ደስ አለዎት! አሸንፈዋል! 🎉<br><span style="font-size:13px; color:#facc15; font-weight:bold;">የእርስዎ ድርሻ፦ ${myShare} ETB</span>`;
     confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
     playHaptic('success');
   }
 
+  // Display winning cards with color differentiation
   const container = document.getElementById('winning-card-container');
   container.innerHTML = '';
-  data.winners.slice(0, 2).forEach(winInfo => {
+  const called = data.calledNumbers || [];
+
+  data.winners.forEach(winInfo => {
     const winningCard = winInfo.cardNum;
     const cols = generateCardLayout(winningCard);
-    const called = data.calledNumbers || [];
+    const winNums = Array.isArray(winInfo.winningNumbers) ? winInfo.winningNumbers : [];
+
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'winning-card-item';
+
     let html = `<div class="winner-name">${winInfo.name} #${winningCard}</div><div class="winning-matrix">`;
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         const v = cols[c][r];
         const isFree = v === 'FREE';
         const isCalled = !isFree && called.includes(v);
+        const isWinningNumber = !isFree && winNums.includes(v);
+        const isWinningCell = isWinningNumber || (isFree && winNums.length > 0);
         const isLast = (v === data.lastCall);
+
         let cls = 'winning-cell';
-        if (isCalled || isFree) cls += ' highlight';
-        if (isLast && !isFree) cls += ' last-call-blink';
+        if (isWinningCell) {
+          cls += ' winning-line-cell'; // Gold for winning pattern
+        } else if (isCalled) {
+          cls += ' called-other-cell'; // Cool blue/cyan for other called numbers
+        }
+        if (isLast && !isFree) {
+          cls += ' last-call-blink';
+        }
+
         html += `<div class="${cls}">${isFree ? 'FREE' : v}</div>`;
       }
     }
     html += `</div>`;
-    container.innerHTML += html;
+    cardDiv.innerHTML = html;
+    container.appendChild(cardDiv);
   });
 
   const overlay = document.getElementById('game-over-overlay');
@@ -2046,6 +2127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGrid();
   updateCardCounter();
   loadRooms();
+  updateNavPill('ticket');
   setTimeout(hideLoadingScreen, 800);
 });
 window.addEventListener('load', () => {
