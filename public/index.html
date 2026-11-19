@@ -320,23 +320,46 @@ body {
   font-weight: 800;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .number-btn:active { transform: scale(0.92); }
 .number-btn.taken-by-other {
-  background: linear-gradient(135deg, #78350f, #451a03) !important;
-  border: 1px solid #d97706 !important;
-  color: #fde047 !important;
-  opacity: 0.9;
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  color: #fbbf24 !important;
+  opacity: 0.85;
   cursor: not-allowed;
 }
 .number-btn.selected {
-  background: linear-gradient(135deg, #facc15, #eab308) !important;
+  background: linear-gradient(135deg, #facc15, #f59e0b) !important;
   color: #000 !important;
   border-color: #ca8a04;
-  box-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.6);
   font-weight: 900;
   transform: scale(1.05);
+}
+@keyframes justTakenPulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.12); filter: brightness(1.4); box-shadow: 0 0 14px rgba(245, 158, 11, 0.8); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+.number-btn.just-taken {
+  animation: justTakenPulse 0.6s ease-out;
+}
+@keyframes derashPulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0px #10b981); }
+  50% { transform: scale(1.18); filter: drop-shadow(0 0 10px #10b981); color: #34d399 !important; }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0px #10b981); }
+}
+.derash-bump {
+  animation: derashPulse 0.5s ease-out;
+}
+@keyframes urgentBlink {
+  from { transform: scale(1); color: #f87171; text-shadow: 0 0 6px rgba(248, 113, 113, 0.5); }
+  to { transform: scale(1.12); color: #ef4444; text-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+}
+.timer-urgent {
+  animation: urgentBlink 0.6s ease-in-out infinite alternate !important;
 }
 
 /* ─── Preview Section ─── */
@@ -1712,7 +1735,7 @@ async function loadWallet() {
       document.getElementById('profile-games-val').innerText = data.data.total_games || 0;
       document.getElementById('profile-wins-val').innerText = data.data.total_wins || 0;
       document.getElementById('profile-phone-val').innerText = data.data.phone || "አልተመዘገበም";
-      document.getElementById('invite-link-input').value = 'https://t.me/abyssinia1bingobot?start=' + userProfile.id;
+      document.getElementById('invite-link-input').value = 'https://t.me/ethiobongo_bot?start=' + userProfile.id;
     }
   } catch (e) {}
 }
@@ -1966,16 +1989,36 @@ socket.on('room_switched', (state) => {
 
 socket.on('sync_taken_cards', (data) => {
   if (data.roomId && data.roomId !== currentRoomId) return;
+
+  const prevDerash = Number(document.getElementById('derash-val-top').innerText) || 0;
+  if (data.derash && data.derash > prevDerash) {
+    const dTop = document.getElementById('derash-val-top');
+    const dBot = document.getElementById('derash-val');
+    if (dTop) { dTop.classList.remove('derash-bump'); void dTop.offsetWidth; dTop.classList.add('derash-bump'); }
+    if (dBot) { dBot.classList.remove('derash-bump'); void dBot.offsetWidth; dBot.classList.add('derash-bump'); }
+  }
+
   document.getElementById('players-val-top').innerText = data.totalPlayers;
   document.getElementById('derash-val-top').innerText = data.derash;
   document.getElementById('players-val').innerText = data.totalPlayers;
   document.getElementById('derash-val').innerText = data.derash;
 
+  const takenSet = new Set(data.takenCards || []);
   for (let i = 1; i <= maxCards; i++) {
     if (!numberButtons[i]) continue;
-    if (selectedCards.has(i)) numberButtons[i].className = 'number-btn selected';
-    else if (data.takenCards?.includes(i)) numberButtons[i].className = 'number-btn taken-by-other';
-    else numberButtons[i].className = 'number-btn';
+    if (selectedCards.has(i)) {
+      numberButtons[i].className = 'number-btn selected';
+    } else if (takenSet.has(i)) {
+      if (!numberButtons[i].classList.contains('taken-by-other')) {
+        // Newly taken by bot or player: trigger smooth pulse animation!
+        numberButtons[i].className = 'number-btn taken-by-other just-taken';
+        setTimeout(() => numberButtons[i]?.classList.remove('just-taken'), 700);
+      } else {
+        numberButtons[i].className = 'number-btn taken-by-other';
+      }
+    } else {
+      numberButtons[i].className = 'number-btn';
+    }
   }
   updateCardClickability();
 });
@@ -1984,7 +2027,15 @@ socket.on('wallet_updated', () => loadWallet());
 socket.on('card_error', (data) => showFooterNotification(data.message));
 socket.on('timer_tick', (data) => {
   if (data.roomId && data.roomId !== currentRoomId) return;
-  document.getElementById('timer-val').innerText = data.remaining + 's';
+  const tEl = document.getElementById('timer-val');
+  if (tEl) {
+    tEl.innerText = data.remaining + 's';
+    if (data.remaining <= 10 && data.remaining > 0) {
+      tEl.classList.add('timer-urgent');
+    } else {
+      tEl.classList.remove('timer-urgent');
+    }
+  }
 });
 
 socket.on('phase_change', (data) => {

@@ -254,7 +254,7 @@ const BOT_TEXTS = {
         wd_enter_phone: "📱 እባክዎ ወደሚወጣበትን የቴሌብር/ባንክ <b>ስልክ ቁጥር</b> ያስገቡ፦",
         wd_success: "✅ <b>የWithdraw ጥያቄዎ ተልኳል!</b>\n\n👤 ስም፦ {name}\n💳 አማራጭ፦ {method}\n💰 መጠን፦ {amount} ETB\n📱 ስልክ፦ {phone}\n\n⏳ <b>እባክዎ አድሚን እስኪያጸድቅ ይጠብቁ።</b>",
         bal_msg: "💵 <b>የሂሳብ ማጠቃለያ</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>አጠቃላይ ባላንስ፦ {total} ETB</b>",
-        invite_msg: "🔗 <b>የእርስዎ የግብዣ ሊንክ፦</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 ወዳጅዎን ሲጋብዙ 30 ብር ያገኛሉ! ጓደኛዎም 20 ብር ያገኛል።",
+        invite_msg: "🔗 <b>የእርስዎ የግብዣ ሊንክ፦</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 ወዳጅዎን ሲጋብዙ 30 ብር ያገኛሉ! ጓደኛዎም 20 ብር ያገኛል።",
         support_msg: "💬 ማንኛውም ጥያቄ ካለዎት በ @Tazikes ያግኙን።",
         history_msg: "📜 ታሪክዎን ለማየት ከዚህ በታች ይጫኑ፦",
         help_msg: "📚 <b>የቦት ትዕዛዞች እና አጋዥ መረጃ</b>\n\n/start - ቦቱን እንደገና ለመጀመር\n/play - ጨዋታውን ለመጫወት\n/balance - ባላንስዎን ለማየት\n/deposit - ገንዘብ ለማስገባት\n/withdraw - ገንዘብ ለማውጣት\n/invite - የግብዣ ሊንክ ለማግኘት\n/support - እርዳታ ለማግኘት\n/lang - ቋንቋ ለመቀየር\n\n💡 <i>ማንኛውንም አዝራር በመጫን ቦቱን መጠቀም ይችላሉ።</i>",
@@ -289,7 +289,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>Choose a bank to withdraw:</b>", wd_enter_amt: "💸 Enter the amount (min 100 ETB):",
         wd_enter_phone: "📱 Enter the Phone number:", wd_success: "✅ <b>Withdraw Request Sent!</b>\n\n👤 Name: {name}\n💳 Method: {method}\n💰 Amount: {amount} ETB\n📱 Phone: {phone}\n\n⏳ <b>Wait for Admin approval.</b>",
         bal_msg: "💵 <b>Balance Summary</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>Total Balance: {total} ETB</b>",
-        invite_msg: "🔗 <b>Your Invite Link:</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 Invite a friend and get 30 ETB! They get 20 ETB.",
+        invite_msg: "🔗 <b>Your Invite Link:</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 Invite a friend and get 30 ETB! They get 20 ETB.",
         support_msg: "💬 Contact @Tazikes.", history_msg: "📜 Click below to view your history:",
         help_msg: "📚 <b>Bot Commands</b>\n\n/start - Restart\n/play - Play\n/balance - Balance\n/deposit - Deposit\n/withdraw - Withdraw\n/invite - Invite\n/support - Support\n/lang - Language\n\n💡 <i>Use the buttons below.</i>",
         leaderboard_msg: "🏆 Click below to view the leaderboard:",
@@ -322,7 +322,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>ናብ ኣየናይ ባንክ ክትወጽኡ ትደልዩ?</b>", wd_enter_amt: "💸 እባክዎ ክትወጽኡ ትደልዩ መጠን ኣእትዉ (ዝቕነይ 100 ETB)፦",
         wd_enter_phone: "📱 እባክዎ ናይ ተሌፎን ቁጽሪ ኣእትዉ፦", wd_success: "✅ <b>ናይ Withdraw ሕቶኹም ተላኢኹ!</b>\n\n👤 ስም፦ {name}\n💳 ኣማራጺ፦ {method}\n💰 መጠን፦ {amount} ETB\n📱 ስልኪ፦ {phone}\n\n⏳ <b>ንኣድሚን ጽበዩ።</b>",
         bal_msg: "💵 <b>ናይ ሂሳብ ጥርዓን</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>ጠቕላላ ባላንስ፦ {total} ETB</b>",
-        invite_msg: "🔗 <b>ናይ ዕድመ ሊንክኩም፦</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 ዓርኪኹም ምስ ትዕድሙ 30 ብር ትረኽቡ! ንሳቶም ድማ 20 ብር ይረኽቡ።",
+        invite_msg: "🔗 <b>ናይ ዕድመ ሊንክኩም፦</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 ዓርኪኹም ምስ ትዕድሙ 30 ብር ትረኽቡ! ንሳቶም ድማ 20 ብር ይረኽቡ።",
         support_msg: "💬 ዝኾነ ሕቶ እንተሎኩም ብ @Tazikes ርኸቡና።", history_msg: "📜 ታሪኽኩም ንምርኣይ ኣብ ታሕቲ ጠውቑ፦",
         help_msg: "📚 <b>ናይ ቦት ትእዛዛት</b>\n\n/start - ቦት ንምጅማር\n/play - ንምጽዋት\n/balance - ባላንስ\n/deposit - ኣታዊ\n/withdraw - ወጻኢ\n/invite - ዕድመ\n/support - ደገፍ\n/lang - ቋንቋ",
         leaderboard_msg: "🏆 ደረጃ ንምርኣይ ኣብ ታሕቲ ጠውቑ፦",
@@ -355,7 +355,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>Baankii baasii barbaaddan filadhaa:</b>", wd_enter_amt: "💸 Hanga baasii galchaa (xiqqaatee 100 ETB):",
         wd_enter_phone: "📱 Lakkoofsa bilbila galchaa:", wd_success: "✅ <b>Gaaffiin Baasii Ergameera!</b>\n\n👤 Maqaa: {name}\n💳 Mala: {method}\n💰 Hanga: {amount} ETB\n📱 Bilbila: {phone}\n\n⏳ <b>Admin eegaa.</b>",
         bal_msg: "💵 <b>Cuunfaa Hajaa</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>Hajaa Waliigalaa: {total} ETB</b>",
-        invite_msg: "🔗 <b>Liinkii Affeera Keessan:</b>\nhttps://t.me/abyssinia1bingobot?start={id}\n\n🎁 Hiriyyaa affeeruun 30 ETB argadhaa! Isaanis 20 ETB argatu.",
+        invite_msg: "🔗 <b>Liinkii Affeera Keessan:</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 Hiriyyaa affeeruun 30 ETB argadhaa! Isaanis 20 ETB argatu.",
         support_msg: "💬 Gaaffii yoo qabaattan @Tazikes qunnamaa.", history_msg: "📜 Seenaa keessan ilaaluuf gadii tuqaa:",
         help_msg: "📚 <b>Ajaja Bot</b>\n\n/start - Jalqabi\n/play - Taphadhu\n/balance - Hajaa\n/deposit - Galii\n/withdraw - Baasii\n/invite - Affeera\n/support - Deeggarsa\n/lang - Afaan",
         leaderboard_msg: "🏆 Sadarkaa ilaaluuf gadii tuqaa:",
@@ -1049,19 +1049,17 @@ function initRoom(def) {
         callInterval: null,
         autoRestartTimer: null,
         botSpawnInterval: null,
+        botSpawnTimer: null,
         remainingTime: def.countdownTime,
         roundWinners: [],
         isEndingRound: false
     };
 }
 
-// ─── Room Bot Allocation & Immediate Card Holding ───
-function allocateRoomBots(room, count) {
-    if (!room.settings.botEnabled) return;
-    const targetBots = Math.max(0, Number(count !== undefined ? count : (room.settings.botCount || 0)));
-    room.settings.botCount = targetBots;
+// ─── Room Bot Card Spawner (Gradual & Sequential Selection During Countdown) ───
+function spawnBotCards(room, count) {
+    if (!room.settings.botEnabled || count <= 0) return 0;
 
-    // Find current bot cards in this room
     const botCardNums = [];
     for (const [cardStr, cardData] of Object.entries(room.takenCards)) {
         if (cardData.isBot) botCardNums.push(Number(cardStr));
@@ -1073,57 +1071,47 @@ function allocateRoomBots(room, count) {
             "Abebe", "Kebede", "Sara", "Dawit", "Almaz", "Yonas", "Selam", "Mahlet", "Meron", 
             "Samuel", "Tigist", "Bruk", "Hiwot", "Nahom", "Ephrem", "Kalkidan", "Getachew", 
             "Aster", "Mulu", "Frehiwot", "Eyob", "Tewodros", "Mekdes", "Tsegaye", "Mariam",
-            "Sara", "Ruth", "Dagmawi", "Meseret", "Tesfaye", "Gidey", "Hagos", "Kidane", "Tirhas"
+            "Sara", "Ruth", "Dagmawi", "Meseret", "Tesfaye", "Gidey", "Hagos", "Kidane", "Tirhas",
+            "Rahel", "Mihret", "Bereket", "Eyerusalem", "Girma", "Hanna", "Abdul", "Fatuma", "Ahmed"
         ];
 
-    // If we currently have more bot cards than targetBots, remove excess (leaving real players completely untouched)
-    if (botCardNums.length > targetBots) {
-        const toRemove = botCardNums.slice(targetBots);
-        toRemove.forEach(cn => {
-            delete room.takenCards[cn];
-            if (room.numberToCardsMap) {
-                Object.keys(room.numberToCardsMap).forEach(num => room.numberToCardsMap[num]?.delete(cn));
-            }
-        });
-    } else if (botCardNums.length < targetBots) {
-        // Need to add more bots
-        const needed = targetBots - botCardNums.length;
-        const availableCards = [];
-        const maxC = room.settings.maxCards || 500;
-        for (let i = 1; i <= maxC; i++) {
-            if (!room.takenCards[i]) availableCards.push(i);
-        }
-        // Shuffle available cards so bots pick random cartelas
-        for (let i = availableCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [availableCards[i], availableCards[j]] = [availableCards[j], availableCards[i]];
-        }
+    const maxC = room.settings.maxCards || 1000;
+    const availableCards = [];
+    for (let i = 1; i <= maxC; i++) {
+        if (!room.takenCards[i]) availableCards.push(i);
+    }
+    if (availableCards.length === 0) return 0;
 
-        const toAdd = Math.min(needed, availableCards.length);
-        for (let i = 0; i < toAdd; i++) {
-            const cardNum = availableCards[i];
-            const botIdx = botCardNums.length + i;
-            let botName = baseNames[botIdx % baseNames.length];
-            if (botIdx >= baseNames.length) botName += ` ${Math.floor(botIdx / baseNames.length) + 1}`;
-            const botId = `bot_${Date.now()}_${botIdx}_${cardNum}`;
+    // Shuffle available cards so bots pick random cartelas across the board
+    for (let i = availableCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [availableCards[i], availableCards[j]] = [availableCards[j], availableCards[i]];
+    }
 
-            room.takenCards[cardNum] = {
-                userId: botId,
-                userName: botName,
-                isBot: true,
-                botName: botName
-            };
+    const toAdd = Math.min(count, availableCards.length);
+    for (let i = 0; i < toAdd; i++) {
+        const cardNum = availableCards[i];
+        const botIdx = botCardNums.length + i;
+        let botName = baseNames[botIdx % baseNames.length];
+        if (botIdx >= baseNames.length) botName += ` ${Math.floor(botIdx / baseNames.length) + 1}`;
+        const botId = `bot_${Date.now()}_${botIdx}_${cardNum}`;
 
-            const cardCols = getCardCols(cardNum);
-            cardCols.forEach(col => {
-                col.forEach(num => {
-                    if (num !== 'FREE') {
-                        if (!room.numberToCardsMap[num]) room.numberToCardsMap[num] = new Set();
-                        room.numberToCardsMap[num].add(cardNum);
-                    }
-                });
+        room.takenCards[cardNum] = {
+            userId: botId,
+            userName: botName,
+            isBot: true,
+            botName: botName
+        };
+
+        const cardCols = getCardCols(cardNum);
+        cardCols.forEach(col => {
+            col.forEach(num => {
+                if (num !== 'FREE') {
+                    if (!room.numberToCardsMap[num]) room.numberToCardsMap[num] = new Set();
+                    room.numberToCardsMap[num].add(cardNum);
+                }
             });
-        }
+        });
     }
 
     const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
@@ -1139,10 +1127,104 @@ function allocateRoomBots(room, count) {
         totalCards: totalActualCards,
         derash: derash
     });
+
+    return toAdd;
+}
+
+function scheduleNextBotPick(room) {
+    if (!room.isRunning || (room.phase !== 'countdown' && room.phase !== 'waiting')) {
+        if (room.botSpawnTimer) { clearTimeout(room.botSpawnTimer); room.botSpawnTimer = null; }
+        return;
+    }
+    if (!room.settings.botEnabled) return;
+
+    const targetBots = Math.max(0, Number(room.settings.botCount !== undefined ? room.settings.botCount : 40));
+    const currentBots = Object.values(room.takenCards).filter(c => c.isBot).length;
+    const needed = targetBots - currentBots;
+
+    if (needed <= 0) {
+        if (room.botSpawnTimer) { clearTimeout(room.botSpawnTimer); room.botSpawnTimer = null; }
+        return;
+    }
+
+    const timeLeft = Math.max(1, room.remainingTime || 1);
+    // Pacing evenly over remaining countdown with natural human-like jitter
+    const idealInterval = Math.max(200, Math.min(2200, Math.floor((timeLeft * 1000) / needed)));
+    const jitter = Math.floor((Math.random() - 0.5) * (idealInterval * 0.4));
+    const delay = Math.max(150, idealInterval + jitter);
+
+    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
+
+    room.botSpawnTimer = setTimeout(() => {
+        if (!room.isRunning || (room.phase !== 'countdown' && room.phase !== 'waiting')) return;
+
+        const curr = Object.values(room.takenCards).filter(c => c.isBot).length;
+        const target = Math.max(0, Number(room.settings.botCount !== undefined ? room.settings.botCount : 40));
+        const stillNeeded = target - curr;
+
+        if (stillNeeded > 0) {
+            const remSecs = Math.max(1, room.remainingTime || 1);
+            let batch = 1;
+            if (remSecs <= 2) {
+                batch = stillNeeded; // Complete remaining bots in final 2 seconds before calling starts
+            } else if (stillNeeded > remSecs * 2) {
+                batch = Math.min(3, Math.ceil(stillNeeded / remSecs));
+            }
+            spawnBotCards(room, batch);
+        }
+
+        if (room.phase === 'countdown' || room.phase === 'waiting') {
+            scheduleNextBotPick(room);
+        }
+    }, delay);
+}
+
+function allocateRoomBots(room, count) {
+    if (!room.settings.botEnabled) return;
+    const targetBots = Math.max(0, Number(count !== undefined ? count : (room.settings.botCount || 0)));
+    room.settings.botCount = targetBots;
+
+    // Find current bot cards in this room
+    const botCardNums = [];
+    for (const [cardStr, cardData] of Object.entries(room.takenCards)) {
+        if (cardData.isBot) botCardNums.push(Number(cardStr));
+    }
+
+    // If we have more bot cards than targetBots, remove excess (leaving real players completely untouched)
+    if (botCardNums.length > targetBots) {
+        const toRemove = botCardNums.slice(targetBots);
+        toRemove.forEach(cn => {
+            delete room.takenCards[cn];
+            if (room.numberToCardsMap) {
+                Object.keys(room.numberToCardsMap).forEach(num => room.numberToCardsMap[num]?.delete(cn));
+            }
+        });
+
+        const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
+        const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
+        const totalActualCards = realCardsCount + botsCount;
+        const derash = totalActualCards * room.derashPerCard;
+
+        emitRoom(room.id, 'sync_taken_cards', {
+            roomId: room.id,
+            takenCards: Object.keys(room.takenCards).map(Number),
+            totalPlayers: totalActualCards,
+            totalCards: totalActualCards,
+            derash: derash
+        });
+    } else if (botCardNums.length < targetBots) {
+        // If in countdown or waiting, schedule gradual sequential selection until countdown finishes
+        if (room.phase === 'countdown' || room.phase === 'waiting') {
+            scheduleNextBotPick(room);
+        }
+    }
 }
 
 function startRoomBotSpawning(room) {
-    allocateRoomBots(room, room.settings.botCount);
+    if (room.botSpawnTimer) { clearTimeout(room.botSpawnTimer); room.botSpawnTimer = null; }
+    if (room.botSpawnInterval) { clearInterval(room.botSpawnInterval); room.botSpawnInterval = null; }
+    if (!room.settings.botEnabled) return;
+    scheduleNextBotPick(room);
 }
 
 function getNextNumberToCall(room) {
@@ -1233,6 +1315,8 @@ function startRoomRound(room) {
     if (room.callInterval) clearInterval(room.callInterval);
     if (room.autoRestartTimer) clearTimeout(room.autoRestartTimer);
     if (room.botSpawnInterval) clearInterval(room.botSpawnInterval);
+    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
+    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
 
     room.phase = 'countdown';
     room.currentCall = null;
@@ -1253,11 +1337,21 @@ function startRoomRound(room) {
         emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime });
 
         if (room.remainingTime <= 0) {
+            // Countdown ended: allocate any remaining bots up to target count immediately
+            if (room.botSpawnTimer) { clearTimeout(room.botSpawnTimer); room.botSpawnTimer = null; }
+            if (room.botSpawnInterval) { clearInterval(room.botSpawnInterval); room.botSpawnInterval = null; }
+            const targetBots = Math.max(0, Number(room.settings.botCount !== undefined ? room.settings.botCount : 40));
+            const currentBots = Object.values(room.takenCards).filter(c => c.isBot).length;
+            if (room.settings.botEnabled && currentBots < targetBots) {
+                spawnBotCards(room, targetBots - currentBots);
+            }
+
             const totalCards = Object.keys(room.takenCards).length;
             if (totalCards < (room.minCardsToStart || 2)) {
                 room.remainingTime = room.settings.countdownTime || 40;
                 emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime });
                 emitRoom(room.id, 'game_status_msg', { message: 'ቢያንስ 2 ካርቴላ ያስፈልጋል! ሰዓቱ እንደገና ተጀምሯል።' });
+                scheduleNextBotPick(room);
                 return;
             }
 
@@ -1334,6 +1428,7 @@ async function endRoomRound(room, winnersData) {
     if (room.gameTimerInterval) { clearInterval(room.gameTimerInterval); room.gameTimerInterval = null; }
     if (room.callInterval) { clearInterval(room.callInterval); room.callInterval = null; }
     if (room.botSpawnInterval) { clearInterval(room.botSpawnInterval); room.botSpawnInterval = null; }
+    if (room.botSpawnTimer) { clearTimeout(room.botSpawnTimer); room.botSpawnTimer = null; }
 
     try {
         const realPlayers = [...new Set(Object.values(room.takenCards).filter(c => !c.isBot).map(c => c.userId))];
@@ -1541,6 +1636,13 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
             if (update.botEnabled !== undefined) r.settings.botEnabled = update.botEnabled;
             if (update.botWinRate) r.settings.botWinRate = Number(update.botWinRate);
             if (update.botNames) r.settings.botNames = update.botNames;
+            if (update.botCount !== undefined) {
+                const bc = Math.max(0, Number(update.botCount));
+                r.settings.botCount = bc;
+                if (r.phase === 'countdown' || r.phase === 'waiting') {
+                    allocateRoomBots(r, bc);
+                }
+            }
             if (update.maxCards !== undefined) {
                 const mc = Math.max(20, Math.min(1000, Number(update.maxCards)));
                 r.settings.maxCards = mc;
@@ -1606,6 +1708,8 @@ app.post('/api/admin/room/:roomId/stop-game', adminAuth, (req, res) => {
     if (room.callInterval) clearInterval(room.callInterval);
     if (room.autoRestartTimer) clearTimeout(room.autoRestartTimer);
     if (room.botSpawnInterval) clearInterval(room.botSpawnInterval);
+    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
+    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
 
     room.phase = 'waiting';
     room.calledNumbers = [];
@@ -1632,6 +1736,15 @@ app.post('/api/admin/room/:roomId/call-number', adminAuth, async (req, res) => {
     // If room is in waiting or countdown phase, Admin can directly initiate calling!
     if (room.phase === 'waiting' || room.phase === 'countdown') {
         if (room.gameTimerInterval) { clearInterval(room.gameTimerInterval); room.gameTimerInterval = null; }
+        if (room.botSpawnTimer) { clearTimeout(room.botSpawnTimer); room.botSpawnTimer = null; }
+        if (room.botSpawnInterval) { clearInterval(room.botSpawnInterval); room.botSpawnInterval = null; }
+
+        const targetBots = Math.max(0, Number(room.settings.botCount !== undefined ? room.settings.botCount : 40));
+        const currentBots = Object.values(room.takenCards).filter(c => c.isBot).length;
+        if (room.settings.botEnabled && currentBots < targetBots) {
+            spawnBotCards(room, targetBots - currentBots);
+        }
+
         room.phase = 'calling';
         emitRoom(room.id, 'phase_change', { roomId: room.id, phase: 'calling' });
     }
@@ -1728,6 +1841,7 @@ app.post('/api/admin/stop-game', adminAuth, (req, res) => {
     if (room.callInterval) clearInterval(room.callInterval);
     if (room.autoRestartTimer) clearTimeout(room.autoRestartTimer);
     if (room.botSpawnInterval) clearInterval(room.botSpawnInterval);
+    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
     room.phase = 'waiting';
     room.calledNumbers = [];
     room.takenCards = {};
