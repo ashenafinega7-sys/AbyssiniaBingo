@@ -862,8 +862,8 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(7, 11, 20, 0.95);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -872,15 +872,63 @@ body {
   overflow-y: auto;
   padding: 20px;
 }
+#celebration-balloons-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.celebration-balloon {
+  position: absolute;
+  bottom: -90px;
+  width: 44px;
+  height: 56px;
+  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  animation: floatUpBalloon 5s ease-in forwards;
+  opacity: 0.95;
+  box-shadow: inset -5px -5px 12px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.4);
+}
+.celebration-balloon::after {
+  content: "";
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 24px;
+  background: rgba(255,255,255,0.7);
+}
+.celebration-balloon::before {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 4px;
+  background: inherit;
+  border-radius: 2px;
+}
+@keyframes floatUpBalloon {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translateY(-55vh) rotate(10deg); }
+  100% { transform: translateY(-120vh) rotate(-10deg); opacity: 0.7; }
+}
+
 .game-over-title {
-  font-size: 34px;
+  font-size: 36px;
   color: var(--gold);
   font-weight: 900;
   margin-bottom: 12px;
-  text-shadow: 0 0 20px var(--gold-glow);
+  text-shadow: 0 0 25px rgba(250, 204, 21, 0.7);
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 2;
 }
-.winner-text { font-size: 18px; color: #fff; font-weight: 900; margin-bottom: 8px; text-align: center; line-height: 1.4; }
-.prize-text { font-size: 26px; color: #10b981; font-weight: 900; margin-bottom: 14px; text-align: center; }
+.winner-text { font-size: 18px; color: #fff; font-weight: 900; margin-bottom: 8px; text-align: center; line-height: 1.4; position: relative; z-index: 2; }
+.prize-text { font-size: 26px; color: #10b981; font-weight: 900; margin-bottom: 14px; text-align: center; position: relative; z-index: 2; }
 
 .winning-card-wrapper {
   width: 100%;
@@ -979,9 +1027,6 @@ body {
 
   <!-- ─── Ticket Page ─── -->
   <div id="page-ticket">
-    <!-- Room Selector Carousel (10, 50, 100 Only) -->
-    <div class="room-bar" id="room-bar-container"></div>
-
     <!-- Top Dashboard Stats -->
     <div class="top-dashboard">
       <div class="dash-card glass-panel"><span class="dash-label">Wallet</span><span class="dash-value wallet" id="wallet-display">0.00</span></div>
@@ -1048,6 +1093,12 @@ body {
 
   <!-- ─── Wallet Page ─── -->
   <div id="page-wallet" class="page-inner-content hidden">
+    <!-- Timed Percentage Deposit Bonus Banner -->
+    <div id="deposit-bonus-banner" class="bonus-banner hidden" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; padding:12px; border-radius:10px; text-align:center; font-weight:bold; margin-bottom:12px; box-shadow:0 4px 15px rgba(245,158,11,0.35); border:1px solid rgba(255,255,255,0.25);">
+      <div style="font-size:14px; font-weight:900;">🔥 የተጨማሪ +<span id="dep-bonus-percent-badge">50</span>% የገቢ ቦነስ ነቅቷል!</div>
+      <div style="font-size:11px; opacity:0.95; margin-top:3px;" id="dep-bonus-timer">የቀረው ጊዜ፦ <span id="dep-bonus-countdown" style="font-family:'Courier New', monospace; font-weight:900;">--:--:--</span></div>
+    </div>
+
     <div id="double-deposit-banner" class="bonus-banner hidden" style="background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; padding:10px; border-radius:8px; text-align:center; font-weight:bold; font-size:12px; margin-bottom:10px;">
       🔥 ድርብ የገቢ ቦነስ ነቅቷል! (Double Deposit Active)
     </div>
@@ -1080,7 +1131,12 @@ body {
     </div>
 
     <div id="deposit-options-section" class="glass-panel hidden" style="padding:14px; margin-bottom:15px;">
-      <div style="font-size:13px; font-weight:800; margin-bottom:10px; color:var(--gold);">📲 የገቢ መረጃ (Deposit Instructions)</div>
+      <div style="font-size:13px; font-weight:800; margin-bottom:8px; color:var(--gold);">📲 የገቢ መረጃ (Deposit Instructions)</div>
+      
+      <div id="dep-bonus-hint" class="hidden" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:8px; margin-bottom:10px; font-size:12px; color:#10b981; font-weight:bold; text-align:center;">
+        🎁 አሁን ገቢ ሲያደርጉ የ +<span id="dep-bonus-sub-pct">50</span>% ተጨማሪ ስጦታ (Bonus) በራስ-ሰር ይታከላል!
+      </div>
+
       <div style="background:rgba(0,0,0,0.3); border-radius:8px; padding:12px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <span>Telebirr: <b id="dep-telebirr-no">0968940123</b></span>
@@ -1224,11 +1280,12 @@ body {
 
 <!-- ─── Game Over Celebration Overlay ─── -->
 <div id="game-over-overlay" class="hidden">
+  <div id="celebration-balloons-container"></div>
   <div class="game-over-title">🏆 BINGO! 🏆</div>
   <div class="winner-text" id="winner-text">--</div>
   <div class="prize-text" id="prize-text">0 ETB</div>
-  <div class="winning-card-wrapper" id="winning-card-container"></div>
-  <div style="margin-top: 15px; text-align: center;">
+  <div class="winning-card-wrapper" id="winning-card-container" style="position:relative; z-index:2;"></div>
+  <div style="margin-top: 15px; text-align: center; position:relative; z-index:2;">
     <div style="font-size: 13px; color: #cbd5e1;">አዲስ ጨዋታ በ...</div>
     <div style="font-size: 36px; color: var(--gold); font-weight: 900;" id="modal-countdown">10</div>
   </div>
@@ -1415,37 +1472,23 @@ function generateCardLayout(cn) {
 function getColumnLetter(num) { return num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O'; }
 function getColumnColor(num) { return num <= 15 ? '#3b82f6' : num <= 30 ? '#ef4444' : num <= 45 ? '#10b981' : num <= 60 ? '#f59e0b' : '#8b5cf6'; }
 
-// ─── Room Bar UI (10, 50, 100 ETB Only) ───
+// ─── Room Initialization (Classic 10 ETB) ───
 async function loadRooms() {
   try {
     const res = await fetch('/api/rooms');
     const data = await res.json();
-    if (data.success && data.rooms) {
-      activeRoomsList = data.rooms.filter(r => ['classic_10', 'mega_50', 'vip_100'].includes(r.id));
-      renderRoomBar();
+    if (data.success && data.rooms && data.rooms.length > 0) {
+      const classic = data.rooms.find(r => r.id === 'classic_10') || data.rooms[0];
+      if (classic) {
+        currentCardPrice = classic.cardPrice || 10;
+        currentDerashPerCard = classic.derashPerCard || 8;
+        maxCards = classic.maxCards || 1000;
+      }
     }
   } catch (e) {}
 }
 
-function renderRoomBar() {
-  const container = document.getElementById('room-bar-container');
-  if (!container) return;
-  container.innerHTML = '';
-  activeRoomsList.forEach(r => {
-    const isActive = r.id === currentRoomId;
-    const card = document.createElement('div');
-    card.className = `room-pill-card ${isActive ? 'active' : ''}`;
-    card.onclick = () => switchRoom(r.id);
-    card.innerHTML = `
-      <div class="r-icon"><i class="fas fa-crown" style="color:${r.color || 'var(--gold)'};"></i></div>
-      <div class="r-info">
-        <span class="r-name">${r.name}</span>
-        <span class="r-stake">${r.cardPrice} ETB | Derash: ${r.derash}</span>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
+function renderRoomBar() {}
 
 function switchRoom(newRoomId) {
   if (currentRoomId === newRoomId) return;
@@ -2061,6 +2104,56 @@ socket.on('sync_room_settings', (data) => {
   }
 });
 
+let depBonusClientInterval = null;
+
+function applyDepositBonusUI(s) {
+  if (depBonusClientInterval) clearInterval(depBonusClientInterval);
+  const banner = document.getElementById('deposit-bonus-banner');
+  const pctBadge = document.getElementById('dep-bonus-percent-badge');
+  const countdownEl = document.getElementById('dep-bonus-countdown');
+  const hintBox = document.getElementById('dep-bonus-hint');
+  const hintPct = document.getElementById('dep-bonus-sub-pct');
+
+  const enabled = !!s?.deposit_bonus_enabled;
+  const pct = Number(s?.deposit_bonus_percent) || 0;
+  const expiresAt = s?.deposit_bonus_expires_at ? new Date(s.deposit_bonus_expires_at) : null;
+  const now = new Date();
+
+  const isLive = enabled && pct > 0 && (!expiresAt || expiresAt > now);
+
+  if (isLive) {
+    if (pctBadge) pctBadge.innerText = `${pct}`;
+    if (hintPct) hintPct.innerText = `${pct}`;
+    if (banner) banner.classList.remove('hidden');
+    if (hintBox) hintBox.classList.remove('hidden');
+
+    const updateClientTicker = () => {
+      if (!expiresAt) {
+        if (countdownEl) countdownEl.innerText = 'Active (Indefinite)';
+        return;
+      }
+      const diff = expiresAt.getTime() - Date.now();
+      if (diff <= 0) {
+        clearInterval(depBonusClientInterval);
+        if (banner) banner.classList.add('hidden');
+        if (hintBox) hintBox.classList.add('hidden');
+        return;
+      }
+      const hrs = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      if (countdownEl) {
+        countdownEl.innerText = `${hrs}h ${mins}m ${secs}s`;
+      }
+    };
+    updateClientTicker();
+    depBonusClientInterval = setInterval(updateClientTicker, 1000);
+  } else {
+    if (banner) banner.classList.add('hidden');
+    if (hintBox) hintBox.classList.add('hidden');
+  }
+}
+
 // Real-Time Global Settings Sync (Admin broadcast without reload)
 socket.on('settings_updated', (data) => {
   const s = data?.settings || data;
@@ -2077,9 +2170,10 @@ socket.on('settings_updated', (data) => {
     const nmEl = document.getElementById('dep-telebirr-name');
     if (nmEl) nmEl.innerText = s.telebirr_name;
   }
+  applyDepositBonusUI(s);
   const ddb = document.getElementById('double-deposit-banner');
   if (ddb) {
-    if (s.doubleDepositActive) ddb.classList.remove('hidden');
+    if (s.doubleDepositActive && !s.deposit_bonus_enabled) ddb.classList.remove('hidden');
     else ddb.classList.add('hidden');
   }
 });
@@ -2102,13 +2196,40 @@ async function loadAppSettings() {
         const nmEl = document.getElementById('dep-telebirr-name');
         if (nmEl) nmEl.innerText = s.telebirr_name;
       }
+      applyDepositBonusUI(s);
       const ddb = document.getElementById('double-deposit-banner');
       if (ddb) {
-        if (s.doubleDepositActive) ddb.classList.remove('hidden');
+        if (s.doubleDepositActive && !s.deposit_bonus_enabled) ddb.classList.remove('hidden');
         else ddb.classList.add('hidden');
       }
     }
   } catch(e) {}
+}
+
+function launchCelebrationBalloons() {
+  const container = document.getElementById('celebration-balloons-container');
+  if (!container) return;
+  container.innerHTML = '';
+  const colors = [
+    'linear-gradient(135deg, #ef4444, #991b1b)',
+    'linear-gradient(135deg, #f59e0b, #b45309)',
+    'linear-gradient(135deg, #10b981, #065f46)',
+    'linear-gradient(135deg, #3b82f6, #1e40af)',
+    'linear-gradient(135deg, #8b5cf6, #5b21b6)',
+    'linear-gradient(135deg, #ec4899, #9d174d)',
+    'linear-gradient(135deg, #06b6d4, #0e7490)'
+  ];
+  for (let i = 0; i < 20; i++) {
+    const balloon = document.createElement('div');
+    balloon.className = 'celebration-balloon';
+    balloon.style.background = colors[i % colors.length];
+    balloon.style.left = (Math.random() * 88 + 6) + '%';
+    balloon.style.animationDuration = (3.5 + Math.random() * 2.5) + 's';
+    balloon.style.animationDelay = (Math.random() * 1.5) + 's';
+    const scale = 0.75 + Math.random() * 0.5;
+    balloon.style.transform = `scale(${scale})`;
+    container.appendChild(balloon);
+  }
 }
 
 socket.on('new_number_called', (data) => {
@@ -2159,18 +2280,39 @@ socket.on('game_over', (data) => {
   const totalPrize = data.totalPrize || 0;
   const prizePerWinner = data.prizePerWinner || Math.floor(totalPrize / (data.winners.length || 1));
 
+  // Grand Celebration: Launch floating balloons & fire confetti cannons
+  launchCelebrationBalloons();
+  try {
+    confetti({ particleCount: 110, spread: 70, origin: { x: 0.15, y: 0.65 } });
+    confetti({ particleCount: 110, spread: 70, origin: { x: 0.85, y: 0.65 } });
+  } catch(e) {}
+
+  // Announce Winning Cartela without the word "አሸናፊ፦" or "Winner:"
   if (data.winners.length > 1) {
-    document.getElementById('winner-text').innerHTML = `${data.winners.length} ተጫዋቾች አሸንፈዋል!<br><span style="font-size:12px; color:#cbd5e1;">${winnerNamesList}</span>`;
+    document.getElementById('winner-text').innerHTML = `
+      <div style="font-size:20px; font-weight:900; color:var(--gold); display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>👑</span> <span>${winnerNamesList}</span>
+      </div>
+    `;
     document.getElementById('prize-text').innerHTML = `${totalPrize} ETB <span style="font-size:13px; color:#94a3b8; display:block; margin-top:3px;">(ለአንድ አሸናፊ: ${prizePerWinner} ETB)</span>`;
   } else {
-    document.getElementById('winner-text').innerHTML = `አሸናፊ፦ ${winnerNamesList}`;
+    document.getElementById('winner-text').innerHTML = `
+      <div style="font-size:22px; font-weight:900; color:var(--gold); display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>👑</span> <span>${winnerNamesList}</span>
+      </div>
+    `;
     document.getElementById('prize-text').innerText = `${totalPrize} ETB`;
   }
 
   if (isMeWinner) {
     const myWinningCount = data.winners.filter(w => String(w.id) === String(userProfile.id)).length;
     const myShare = myWinningCount * prizePerWinner;
-    document.getElementById('winner-text').innerHTML = `🎉 እንኳን ደስ አለዎት! አሸንፈዋል! 🎉<br><span style="font-size:13px; color:#facc15; font-weight:bold;">የእርስዎ ድርሻ፦ ${myShare} ETB</span>`;
+    document.getElementById('winner-text').innerHTML = `
+      <div style="font-size:22px; font-weight:900; color:var(--gold); display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>🎉 👑</span> <span>${winnerNamesList}</span>
+      </div>
+      <div style="font-size:13px; color:#facc15; font-weight:bold; margin-top:4px;">የእርስዎ ድርሻ፦ ${myShare} ETB</div>
+    `;
     confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
     playHaptic('success');
   }

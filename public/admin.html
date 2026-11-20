@@ -203,15 +203,18 @@
         <div class="menu-group">
             <div class="menu-label">Game Engine</div>
             <div class="menu-item active" onclick="switchPage('game', this)"><i class="fas fa-gamepad"></i> Live Command</div>
+            <div class="menu-item" onclick="switchPage('live-players', this)"><i class="fas fa-users"></i> Live Players</div>
+            <div class="menu-item" onclick="switchPage('live-cartelas', this)"><i class="fas fa-th-large"></i> Live Cartelas</div>
             <div class="menu-item" onclick="switchPage('dashboard', this)"><i class="fas fa-chart-line"></i> Dashboard</div>
             <div class="menu-item" onclick="switchPage('deposits', this)"><i class="fas fa-arrow-down"></i> Deposits <span id="notif-deposits" class="notif-badge hidden">0</span></div>
             <div class="menu-item" onclick="switchPage('withdrawals', this)"><i class="fas fa-arrow-up"></i> Withdrawals <span id="notif-withdrawals" class="notif-badge hidden">0</span></div>
             
             <div class="menu-label">Management</div>
-            <div class="menu-item" onclick="switchPage('users', this)"><i class="fas fa-users"></i> Users Directory</div>
+            <div class="menu-item" onclick="switchPage('users', this)"><i class="fas fa-address-book"></i> Users Directory</div>
             <div class="menu-item" onclick="switchPage('bots', this)"><i class="fas fa-robot"></i> Ghost Bots</div>
-            <div class="menu-item" onclick="switchPage('referrals', this)"><i class="fas fa-network-wired"></i> Referrals</div>
+            <div class="menu-item" onclick="switchPage('deposit-bonus', this)"><i class="fas fa-percentage"></i> Deposit Bonus %</div>
             <div class="menu-item" onclick="switchPage('invitation-bonus', this)"><i class="fas fa-gift"></i> Invitation Bonus</div>
+            <div class="menu-item" onclick="switchPage('referrals', this)"><i class="fas fa-network-wired"></i> Referrals</div>
             <div class="menu-item" onclick="switchPage('promo', this)"><i class="fas fa-tags"></i> Promo Codes</div>
             <div class="menu-item" onclick="switchPage('broadcast', this)"><i class="fas fa-bullhorn"></i> Broadcast</div>
             <div class="menu-item" onclick="switchPage('giveaway', this)"><i class="fas fa-gift"></i> Giveaway</div>
@@ -238,18 +241,12 @@
 
         <div class="page-container">
             
-            <!-- ─── Live Game Command Center ─── -->
+            <!-- ─── 1. Live Game Command Center ─── -->
             <div id="page-game" class="page active">
-                <!-- Room Selector Pills (10, 50, 100 ETB Only) -->
-                <div class="admin-room-bar" id="admin-room-pills">
-                    <button class="admin-room-btn active" onclick="selectAdminRoom('classic_10')"><i class="fas fa-dice"></i> Classic 10 ETB</button>
-                    <button class="admin-room-btn" onclick="selectAdminRoom('mega_50')"><i class="fas fa-gem"></i> Gold 50 ETB</button>
-                    <button class="admin-room-btn" onclick="selectAdminRoom('vip_100')"><i class="fas fa-star"></i> VIP 100 ETB</button>
-                </div>
-
                 <div class="stats-row">
-                    <div class="stat-box"><div class="stat-box-title">Active Room</div><div class="stat-box-value gold" id="adm-room-name">Classic 10 ETB</div></div>
-                    <div class="stat-box"><div class="stat-box-title">Phase</div><div class="stat-box-value green" id="adm-game-phase">-</div></div>
+                    <div class="stat-box"><div class="stat-box-title">Room</div><div class="stat-box-value gold" id="adm-room-name">Classic 10 ETB</div></div>
+                    <div class="stat-box"><div class="stat-box-title">Phase</div><div class="stat-box-value green" id="adm-game-phase">WAITING</div></div>
+                    <div class="stat-box"><div class="stat-box-title">Cartela Selection Timer</div><div class="stat-box-value cyan" id="adm-countdown-timer">Waiting</div></div>
                     <div class="stat-box"><div class="stat-box-title">Calls / Last</div><div class="stat-box-value blue" id="adm-calls-display">0 / --</div></div>
                     <div class="stat-box"><div class="stat-box-title">Cards Sold / Derash</div><div class="stat-box-value gold" id="adm-cards-derash">0 / 0 ETB</div></div>
                 </div>
@@ -304,18 +301,39 @@
                             <button class="btn btn-warning btn-sm" onclick="saveRoomBotCount()"><i class="fas fa-save"></i> Set</button>
                         </div>
                     </div>
-                </div>
 
-                <!-- Active Players Grid -->
-                <div class="table-wrapper" style="margin-bottom: 20px;">
-                    <div class="table-header">
-                        <h3><i class="fas fa-users"></i> Live Players in Room</h3>
-                        <span id="adm-real-vs-bot" style="font-size:12px; color:var(--text-muted);">Real: 0 | Bots: 0</span>
+                    <!-- Quick Navigation Cards to Players and Cartelas -->
+                    <div style="display:flex; gap:10px; margin-top:14px;">
+                        <button class="btn btn-primary" style="flex:1; justify-content:center; padding:10px;" onclick="switchPage('live-players', document.querySelectorAll('.menu-item')[1])">
+                            <i class="fas fa-users"></i> Go to Live Players Tab
+                        </button>
+                        <button class="btn btn-warning" style="flex:1; justify-content:center; padding:10px;" onclick="switchPage('live-cartelas', document.querySelectorAll('.menu-item')[2])">
+                            <i class="fas fa-trophy"></i> Go to Live Cartelas Tab
+                        </button>
                     </div>
-                    <div style="padding: 15px; display: flex; flex-wrap: wrap; gap: 10px;" id="active-players-list"></div>
                 </div>
+            </div>
 
-                <!-- Live Cartela Proximity & Completion (Closest to Win at Top) -->
+            <!-- ─── 2. Live Players in Room (Dedicated Tab) ─── -->
+            <div id="page-live-players" class="page">
+                <div class="table-wrapper">
+                    <div class="table-header">
+                        <div>
+                            <h3><i class="fas fa-users" style="color:var(--primary);"></i> Live Players in Room</h3>
+                            <span id="adm-real-vs-bot" style="font-size:12px; color:var(--text-muted);">Real: 0 | Bots: 0</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button class="btn btn-primary btn-sm" onclick="loadGameStatus()"><i class="fas fa-sync"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <div style="padding: 15px; display: flex; flex-wrap: wrap; gap: 10px; min-height: 250px;" id="active-players-list">
+                        <span style="color:var(--text-muted); font-size:12px;">No active players in room.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── 3. Live Cartela Proximity & Completion (Dedicated Tab) ─── -->
+            <div id="page-live-cartelas" class="page">
                 <div class="table-wrapper">
                     <div class="table-header">
                         <div>
@@ -324,6 +342,7 @@
                         </div>
                         <div style="display:flex; gap:8px; align-items:center;">
                             <span class="badge" id="adm-near-win-badge" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid #ef4444; padding:4px 8px; border-radius:12px; font-weight:bold; font-size:11px;">0 Near Win</span>
+                            <button class="btn btn-primary btn-sm" onclick="loadGameStatus()"><i class="fas fa-sync"></i> Refresh</button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -541,6 +560,76 @@
                 </div>
             </div>
 
+            <!-- ─── Timed Deposit Bonus (%) ─── -->
+            <div id="page-deposit-bonus" class="page">
+                <div class="table-wrapper" style="padding: 25px; max-width: 650px;">
+                    <h3 style="margin-bottom: 8px; color: var(--gold);"><i class="fas fa-percentage"></i> Timed Deposit Bonus (%)</h3>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">
+                        Configure promotional deposit bonus percentage that rewards players with extra bonus Play Balance for deposits approved during an admin-specified duration.
+                    </p>
+
+                    <!-- Status Banner -->
+                    <div id="adm-dep-bonus-status-banner" style="padding: 14px; border-radius: 8px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); border: 1px solid var(--border);">
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--text-muted);">Promotion Status</div>
+                            <div id="adm-dep-bonus-status-text" style="font-size: 15px; font-weight: 900; color: #ef4444; margin-top: 2px;">⚪ Inactive / Disabled</div>
+                            <div id="adm-dep-bonus-expiry-text" style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">No active time window</div>
+                        </div>
+                        <div id="adm-dep-bonus-badge" style="background: rgba(239,68,68,0.2); color: #ef4444; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 12px;">OFF</div>
+                    </div>
+
+                    <!-- Master Toggle -->
+                    <div style="margin-bottom: 18px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="adm-dep-bonus-enabled" style="width: 18px; height: 18px;">
+                            <label for="adm-dep-bonus-enabled" style="font-size: 14px; font-weight: bold; color: var(--text);">Enable Timed Deposit Bonus Promotion</label>
+                        </div>
+                    </div>
+
+                    <!-- Bonus Percentage -->
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 13px; font-weight: bold; color: var(--gold); display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-coins"></i> Deposit Bonus Percentage / የቦነስ መቶኛ (%)
+                        </label>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Percentage of deposited amount added as bonus (e.g., 50% on 100 ETB = 50 ETB bonus, total 150 ETB).</p>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" id="adm-dep-bonus-percent" class="form-control" style="font-size: 16px; font-weight: 900; color: var(--gold);" value="50" min="1" max="500">
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusPercentPreset(10)">10%</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusPercentPreset(20)">20%</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusPercentPreset(30)">30%</button>
+                            <button class="btn btn-warning btn-sm" onclick="setDepBonusPercentPreset(50)">50%</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusPercentPreset(100)">100%</button>
+                        </div>
+                    </div>
+
+                    <!-- Duration in Hours -->
+                    <div style="margin-bottom: 22px;">
+                        <label style="font-size: 13px; font-weight: bold; color: var(--cyan); display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-clock"></i> Active Duration / የቆይታ ጊዜ (Hours)
+                        </label>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">How many hours from now the bonus promotion will stay active.</p>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" id="adm-dep-bonus-duration" class="form-control" style="font-size: 16px; font-weight: 900; color: var(--cyan);" value="24" min="0.5" step="0.5">
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusDurationPreset(1)">1h</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusDurationPreset(3)">3h</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusDurationPreset(6)">6h</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusDurationPreset(12)">12h</button>
+                            <button class="btn btn-warning btn-sm" onclick="setDepBonusDurationPreset(24)">24h</button>
+                            <button class="btn btn-primary btn-sm" onclick="setDepBonusDurationPreset(48)">48h</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-success" onclick="saveDepositBonusSettings(true)" style="flex: 2; padding: 14px; font-size: 14px;">
+                            <i class="fas fa-broadcast-tower"></i> Save & Activate Bonus
+                        </button>
+                        <button class="btn btn-danger" onclick="saveDepositBonusSettings(false)" style="flex: 1; padding: 14px; font-size: 14px;">
+                            <i class="fas fa-stop"></i> Deactivate
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- ─── Game History ─── -->
             <div id="page-history" class="page">
                 <div class="table-wrapper">
@@ -728,14 +817,28 @@ function switchPage(pageId, element) {
     if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('active');
 
     const titles = {
-        game: 'Live Command Center', dashboard: 'Financial Dashboard',
-        bots: 'Ghost Bot Simulator', users: 'Users Directory', deposits: 'Deposit Approvals',
-        withdrawals: 'Withdrawal Approvals', promo: 'Promo Codes', broadcast: 'Broadcasts',
-        giveaway: 'Giveaways', referrals: 'Referral Leaderboard', 'invitation-bonus': 'Invitation Bonus Settings', history: 'Game History', settings: 'Settings'
+        game: 'Live Command Center',
+        'live-players': 'Live Players in Room',
+        'live-cartelas': 'Live Cartela Proximity & Completion',
+        dashboard: 'Financial Dashboard',
+        bots: 'Ghost Bot Simulator',
+        users: 'Users Directory',
+        deposits: 'Deposit Approvals',
+        withdrawals: 'Withdrawal Approvals',
+        promo: 'Promo Codes',
+        broadcast: 'Broadcasts',
+        giveaway: 'Giveaways',
+        referrals: 'Referral Leaderboard',
+        'deposit-bonus': 'Timed Deposit Bonus (%)',
+        'invitation-bonus': 'Invitation Bonus Settings',
+        history: 'Game History',
+        settings: 'Settings'
     };
     document.getElementById('page-title').innerText = titles[pageId] || 'Admin';
 
-    if (pageId === 'game') { startGameStatusPolling(); }
+    if (pageId === 'game' || pageId === 'live-players' || pageId === 'live-cartelas') {
+        startGameStatusPolling();
+    }
     else if (pageId === 'dashboard') loadDashboardData();
     else if (pageId === 'bots') loadBotSettings();
     else if (pageId === 'users') loadPlayers();
@@ -745,11 +848,12 @@ function switchPage(pageId, element) {
     else if (pageId === 'broadcast') loadBroadcasts();
     else if (pageId === 'giveaway') loadGiveaways();
     else if (pageId === 'referrals') loadReferrals();
+    else if (pageId === 'deposit-bonus') loadDepositBonusSettings();
     else if (pageId === 'invitation-bonus') loadInvitationBonusSettings();
     else if (pageId === 'history') loadGameHistory();
     else if (pageId === 'settings') loadGlobalSettings();
 
-    if (pageId !== 'game' && gameStatusInterval) {
+    if (pageId !== 'game' && pageId !== 'live-players' && pageId !== 'live-cartelas' && gameStatusInterval) {
         clearInterval(gameStatusInterval);
         gameStatusInterval = null;
     }
@@ -757,15 +861,8 @@ function switchPage(pageId, element) {
 
 // ─── Room Switching ───
 function selectAdminRoom(roomId) {
-    currentAdminRoomId = roomId;
-    const names = {
-        'classic_10': 'Classic 10 ETB',
-        'mega_50': 'Gold 50 ETB',
-        'vip_100': 'VIP 100 ETB'
-    };
-    document.getElementById('adm-room-name').innerText = names[roomId] || roomId;
-    document.querySelectorAll('.admin-room-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    currentAdminRoomId = 'classic_10';
+    document.getElementById('adm-room-name').innerText = 'Classic 10 ETB';
     loadGameStatus();
 }
 
@@ -773,8 +870,10 @@ function startGameStatusPolling() {
     if (gameStatusInterval) return;
     loadGameStatus();
     gameStatusInterval = setInterval(() => {
-        if (currentPage === 'game') loadGameStatus();
-    }, 5000);
+        if (currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas') {
+            loadGameStatus();
+        }
+    }, 4000);
 }
 
 async function loadGameStatus() {
@@ -783,6 +882,21 @@ async function loadGameStatus() {
         if (d.success && d.data) {
             const room = d.data;
             document.getElementById('adm-game-phase').innerText = (room.phase || 'WAITING').toUpperCase();
+
+            // Cartela Selection Countdown Timer
+            const timerEl = document.getElementById('adm-countdown-timer');
+            if (timerEl) {
+                if (room.phase === 'countdown') {
+                    timerEl.innerText = `${room.remainingTime || 0}s`;
+                    timerEl.style.color = 'var(--cyan)';
+                } else if (room.phase === 'calling') {
+                    timerEl.innerText = 'Calling';
+                    timerEl.style.color = 'var(--gold)';
+                } else {
+                    timerEl.innerText = 'Waiting';
+                    timerEl.style.color = 'var(--text-muted)';
+                }
+            }
             
             const callCount = room.calledNumbers ? room.calledNumbers.length : 0;
             const lastNum = room.currentCall || (room.calledNumbers && room.calledNumbers.length ? room.calledNumbers[room.calledNumbers.length - 1] : null);
@@ -1688,6 +1802,117 @@ async function saveInvitationBonusSettings() {
     }
 }
 
+// ─── Deposit Bonus Settings ───
+let depBonusCountdownInterval = null;
+
+async function loadDepositBonusSettings() {
+    try {
+        const d = await apiFetch('/api/settings');
+        if (d.success && d.data) {
+            const s = d.data;
+            const enabled = !!s.deposit_bonus_enabled;
+            const pct = s.deposit_bonus_percent !== undefined ? s.deposit_bonus_percent : 50;
+            const dur = s.deposit_bonus_duration_hours !== undefined ? s.deposit_bonus_duration_hours : 24;
+
+            const chk = document.getElementById('adm-dep-bonus-enabled');
+            if (chk) chk.checked = enabled;
+            const pctEl = document.getElementById('adm-dep-bonus-percent');
+            if (pctEl) pctEl.value = pct;
+            const durEl = document.getElementById('adm-dep-bonus-duration');
+            if (durEl) durEl.value = dur;
+
+            updateAdminDepBonusBanner(s);
+        }
+    } catch(e) {}
+}
+
+function updateAdminDepBonusBanner(s) {
+    if (depBonusCountdownInterval) clearInterval(depBonusCountdownInterval);
+    const textEl = document.getElementById('adm-dep-bonus-status-text');
+    const expiryEl = document.getElementById('adm-dep-bonus-expiry-text');
+    const badgeEl = document.getElementById('adm-dep-bonus-badge');
+    const bannerEl = document.getElementById('adm-dep-bonus-status-banner');
+    if (!textEl) return;
+
+    const enabled = !!s?.deposit_bonus_enabled;
+    const expiresAt = s?.deposit_bonus_expires_at ? new Date(s.deposit_bonus_expires_at) : null;
+    const now = new Date();
+
+    const isLive = enabled && (!expiresAt || expiresAt > now) && (Number(s?.deposit_bonus_percent) > 0);
+
+    if (isLive) {
+        if (bannerEl) { bannerEl.style.borderColor = '#10b981'; bannerEl.style.background = 'rgba(16,185,129,0.1)'; }
+        textEl.style.color = '#10b981';
+        textEl.innerText = `🟢 ACTIVE: +${s.deposit_bonus_percent}% Bonus`;
+        if (badgeEl) { badgeEl.style.background = 'rgba(16,185,129,0.2)'; badgeEl.style.color = '#10b981'; badgeEl.innerText = 'ACTIVE'; }
+
+        const updateTicker = () => {
+            if (!expiresAt) {
+                if (expiryEl) expiryEl.innerText = 'No expiration (Indefinite)';
+                return;
+            }
+            const diff = expiresAt.getTime() - Date.now();
+            if (diff <= 0) {
+                clearInterval(depBonusCountdownInterval);
+                textEl.innerText = '⚪ Expired';
+                textEl.style.color = '#ef4444';
+                if (badgeEl) { badgeEl.innerText = 'EXPIRED'; badgeEl.style.background = 'rgba(239,68,68,0.2)'; badgeEl.style.color = '#ef4444'; }
+                if (expiryEl) expiryEl.innerText = 'Promotion window has ended.';
+                return;
+            }
+            const hrs = Math.floor(diff / 3600000);
+            const mins = Math.floor((diff % 3600000) / 60000);
+            const secs = Math.floor((diff % 60000) / 1000);
+            if (expiryEl) expiryEl.innerText = `Expires in: ${hrs}h ${mins}m ${secs}s (${expiresAt.toLocaleString()})`;
+        };
+        updateTicker();
+        depBonusCountdownInterval = setInterval(updateTicker, 1000);
+    } else {
+        if (bannerEl) { bannerEl.style.borderColor = 'var(--border)'; bannerEl.style.background = 'rgba(0,0,0,0.3)'; }
+        textEl.style.color = '#ef4444';
+        textEl.innerText = '⚪ Inactive / Disabled';
+        if (badgeEl) { badgeEl.style.background = 'rgba(239,68,68,0.2)'; badgeEl.style.color = '#ef4444'; badgeEl.innerText = 'OFF'; }
+        if (expiryEl) expiryEl.innerText = 'No active time window';
+    }
+}
+
+function setDepBonusPercentPreset(pct) {
+    const el = document.getElementById('adm-dep-bonus-percent');
+    if (el) el.value = pct;
+}
+
+function setDepBonusDurationPreset(hrs) {
+    const el = document.getElementById('adm-dep-bonus-duration');
+    if (el) el.value = hrs;
+}
+
+async function saveDepositBonusSettings(activate) {
+    const enabled = activate !== undefined ? activate : document.getElementById('adm-dep-bonus-enabled').checked;
+    const pct = Number(document.getElementById('adm-dep-bonus-percent').value);
+    const duration = Number(document.getElementById('adm-dep-bonus-duration').value);
+
+    if (enabled && (isNaN(pct) || pct <= 0)) return showToast('Enter valid bonus percentage (> 0)', true);
+    if (enabled && (isNaN(duration) || duration <= 0)) return showToast('Enter valid duration hours (> 0)', true);
+
+    try {
+        const payload = {
+            deposit_bonus_enabled: enabled,
+            deposit_bonus_percent: pct,
+            deposit_bonus_duration_hours: duration
+        };
+        const res = await apiFetch('/api/admin/settings', 'POST', payload);
+        if (res.success) {
+            showToast(enabled ? `🎉 +${pct}% Deposit Bonus activated for ${duration}h!` : 'Deposit bonus deactivated');
+            document.getElementById('adm-dep-bonus-enabled').checked = enabled;
+            loadDepositBonusSettings();
+        } else {
+            showToast(res.message || 'Failed to save', true);
+        }
+    } catch(e) {
+        showToast('Error saving deposit bonus', true);
+    }
+}
+
 // ─── Real-Time Notifications & Web Push ───
 let adminSocket = null;
 
@@ -1725,8 +1950,16 @@ function initAdminRealtime() {
         });
 
         // Real-Time Game Events Syncing directly from server
+        adminSocket.on('timer_tick', (data) => {
+            const timerEl = document.getElementById('adm-countdown-timer');
+            if (timerEl && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+                timerEl.innerText = `${data.remaining}s`;
+                timerEl.style.color = 'var(--cyan)';
+            }
+        });
+
         adminSocket.on('new_number_called', (data) => {
-            if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+            if ((currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas') && (!data?.roomId || data.roomId === currentAdminRoomId)) {
                 const num = data.number;
                 const prefix = num <= 15 ? 'B' : num <= 30 ? 'I' : num <= 45 ? 'N' : num <= 60 ? 'G' : 'O';
                 const count = data.allCalled ? data.allCalled.length : (data.callCount || 0);
@@ -1737,16 +1970,18 @@ function initAdminRealtime() {
         });
 
         adminSocket.on('reset_game', (data) => {
-            if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+            if ((currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas') && (!data?.roomId || data.roomId === currentAdminRoomId)) {
                 const el = document.getElementById('adm-calls-display');
                 if (el) el.innerText = '0 / --';
+                const timerEl = document.getElementById('adm-countdown-timer');
+                if (timerEl) { timerEl.innerText = 'Waiting'; timerEl.style.color = 'var(--text-muted)'; }
                 loadGameStatus();
             }
         });
 
         ['sync_taken_cards', 'phase_change', 'game_over'].forEach(ev => {
             adminSocket.on(ev, (data) => {
-                if (currentPage === 'game' && (!data?.roomId || data.roomId === currentAdminRoomId)) {
+                if ((currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas') && (!data?.roomId || data.roomId === currentAdminRoomId)) {
                     loadGameStatus();
                 }
             });

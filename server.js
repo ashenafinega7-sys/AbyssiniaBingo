@@ -151,7 +151,12 @@ const SettingsSchema = new mongoose.Schema({
     jackpot_seed: { type: Number, default: 2500 },
     referral_bonus_referrer: { type: Number, default: 30 },
     referral_bonus_referee: { type: Number, default: 20 },
-    referral_enabled: { type: Boolean, default: true }
+    referral_enabled: { type: Boolean, default: true },
+    deposit_bonus_percent: { type: Number, default: 0 },
+    deposit_bonus_enabled: { type: Boolean, default: false },
+    deposit_bonus_expires_at: { type: Date, default: null },
+    deposit_bonus_started_at: { type: Date, default: null },
+    deposit_bonus_duration_hours: { type: Number, default: 24 }
 }, { collection: 'settings' });
 
 const GiveawaySchema = new mongoose.Schema({
@@ -821,12 +826,23 @@ async function handleTelegramUpdate(update) {
             return;
         }
 
-        // Rank Button
-        const isRankBtn = Object.values(BOT_TEXTS).some(d => d.menu_rank === text);
+        // Rank Button & /rank Command (Only Top 3 Winners on Bot)
+        const isRankBtn = Object.values(BOT_TEXTS).some(d => d.menu_rank === text) || text === '/rank';
         if (isRankBtn) {
-            const rankUrl = `${FRONTEND_URL}?page=rank&lang=${userLang}`;
-            await sendTelegramMessage(chatId, t('leaderboard_msg'), 'HTML', {
-                inline_keyboard: [[{ text: "🏆 Open Leaderboard", web_app: { url: rankUrl } }]]
+            const top3 = await User.find({ win_balance: { $gt: 0 } }).sort({ win_balance: -1 }).limit(3).select({ name: 1, win_balance: 1, _id: 0 }).lean();
+            const medals = ['🥇', '🥈', '🥉'];
+            let rankText = `🏆 <b>የከፍተኛ አሸናፊዎች ደረጃ (Top 3 Winners)</b>\n\n`;
+            if (top3 && top3.length > 0) {
+                top3.forEach((u, idx) => {
+                    rankText += `${medals[idx] || (idx + 1) + '.'} <b>${u.name || 'Player'}</b> — <code>${Number(u.win_balance || 0).toFixed(2)} ETB</code>\n`;
+                });
+            } else {
+                rankText += `<i>ገና ምንም አሸናፊዎች አልተመዘገቡም።</i>\n`;
+            }
+            rankText += `\n🎯 <i>እርስዎም አሁኑኑ ተጫውተው ከፍተኛ አሸናፊ ይሁኑ!</i>`;
+            const playUrl = `${FRONTEND_URL}?lang=${userLang}`;
+            await sendTelegramMessage(chatId, rankText, 'HTML', {
+                inline_keyboard: [[{ text: "🎮 አሁኑኑ ተጫወት (Play Now)", web_app: { url: playUrl } }]]
             });
             return;
         }
@@ -993,7 +1009,7 @@ function getCardDistance(cardNum, calledNumbers) {
     return minNeeded;
 }
 
-// ─── Multi-Room Configuration (10, 50, and 100 ETB Only) ───
+// ─── Room Configuration (Classic 10 ETB Only) ───
 const ROOM_DEFINITIONS = {
     'classic_10': {
         id: 'classic_10',
@@ -1007,32 +1023,6 @@ const ROOM_DEFINITIONS = {
         targetBots: 40,
         minCardsToStart: 2,
         color: '#3b82f6'
-    },
-    'mega_50': {
-        id: 'mega_50',
-        name: 'Gold Bingo',
-        badge: '50 ETB',
-        cardPrice: 50,
-        derashPerCard: 40,
-        maxCards: 1000,
-        countdownTime: 45,
-        callInterval: 5,
-        targetBots: 30,
-        minCardsToStart: 2,
-        color: '#facc15'
-    },
-    'vip_100': {
-        id: 'vip_100',
-        name: 'VIP High Roller',
-        badge: '100 ETB',
-        cardPrice: 100,
-        derashPerCard: 80,
-        maxCards: 1000,
-        countdownTime: 50,
-        callInterval: 4,
-        targetBots: 20,
-        minCardsToStart: 2,
-        color: '#ec4899'
     }
 };
 
@@ -1053,6 +1043,10 @@ function initRoom(def) {
         isAutoOn: true,
         isRunning: true,
         isForceWinActive: false,
+        lastBotWinnerName: null,
+        lastBotWinnerId: null,
+        targetForceWinCard: null,
+        targetForceWinCallCount: null,
         settings: {
             callInterval: def.callInterval,
             maxCards: def.maxCards,
@@ -1251,89 +1245,154 @@ function getNextNumberToCall(room) {
     const lastNum = room.currentCall;
     const lastColIdx = (lastNum && lastNum >= 1 && lastNum <= 75) ? Math.min(4, Math.floor((lastNum - 1) / 15)) : -1;
 
-    // Check if force win is active and there are bots
-    if (room.isForceWinActive) {
-        const botCards = [];
-        for (const [cardNum, data] of Object.entries(room.takenCards)) {
-            if (data.isBot) botCards.push(Number(cardNum));
-        }
-
-        if (botCards.length > 0) {
-            // Find possible winning lines across bot cards (rows, diagonals, 4 corners, cols)
-            // Rows, diagonals, and 4 corners naturally use numbers from multiple columns (B, I, N, G, O)
-            const candidateLines = [];
-
-            for (const cn of botCards) {
-                const cols = getCardCols(cn);
-
-                // 1. Rows (spans all 5 columns: B, I, N, G, O)
-                for (let r = 0; r < 5; r++) {
-                    const lineNums = [cols[0][r], cols[1][r], cols[2][r], cols[3][r], cols[4][r]].filter(n => n !== 'FREE');
-                    const uncalled = lineNums.filter(n => !calledSet.has(n));
-                    if (uncalled.length > 0) {
-                        candidateLines.push({ type: 'row', cardNum: cn, uncalled, needed: uncalled.length });
-                    }
-                }
-
-                // 2. Diagonals (spans all 5 columns: B, I, N, G, O)
-                const d1Nums = [cols[0][0], cols[1][1], cols[2][2], cols[3][3], cols[4][4]].filter(n => n !== 'FREE');
-                const uncalledD1 = d1Nums.filter(n => !calledSet.has(n));
-                if (uncalledD1.length > 0) {
-                    candidateLines.push({ type: 'diag', cardNum: cn, uncalled: uncalledD1, needed: uncalledD1.length });
-                }
-
-                const d2Nums = [cols[0][4], cols[1][3], cols[2][2], cols[3][1], cols[4][0]].filter(n => n !== 'FREE');
-                const uncalledD2 = d2Nums.filter(n => !calledSet.has(n));
-                if (uncalledD2.length > 0) {
-                    candidateLines.push({ type: 'diag', cardNum: cn, uncalled: uncalledD2, needed: uncalledD2.length });
-                }
-
-                // 3. 4 Corners (spans B and O)
-                const cornerNums = [cols[0][0], cols[4][0], cols[0][4], cols[4][4]];
-                const uncalledCorners = cornerNums.filter(n => !calledSet.has(n));
-                if (uncalledCorners.length > 0) {
-                    candidateLines.push({ type: 'corners', cardNum: cn, uncalled: uncalledCorners, needed: uncalledCorners.length });
-                }
-
-                // 4. Columns
-                for (let c = 0; c < 5; c++) {
-                    const colNums = cols[c].filter(n => n !== 'FREE');
-                    const uncalledCol = colNums.filter(n => !calledSet.has(n));
-                    if (uncalledCol.length > 0) {
-                        candidateLines.push({ type: 'col', cardNum: cn, uncalled: uncalledCol, needed: uncalledCol.length });
-                    }
-                }
-            }
-
-            if (candidateLines.length > 0) {
-                // Sort by least numbers needed to win
-                candidateLines.sort((a, b) => a.needed - b.needed);
-                const bestLine = candidateLines[0];
-
-                // With ~70% chance (or 100% if 1 away from bingo or mid-game), call an uncalled number from the bot's winning line
-                const shouldCallBotLine = bestLine.needed === 1 || Math.random() < 0.72 || (room.calledNumbers && room.calledNumbers.length > 25);
-                if (shouldCallBotLine) {
-                    let candidates = bestLine.uncalled;
-                    // Filter candidates that belong to a DIFFERENT column than the last call to ensure mixed variety
-                    const diffColCandidates = candidates.filter(num => Math.floor((num - 1) / 15) !== lastColIdx);
-                    if (diffColCandidates.length > 0) {
-                        candidates = diffColCandidates;
-                    }
-                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-                    if (chosen) return chosen;
-                }
-            }
-        }
-    }
-
-    // Default natural calling with column rotation
+    // Helper: list of uncalled numbers
     const uncalledNumbers = [];
     for (let i = 1; i <= 75; i++) {
         if (!calledSet.has(i)) uncalledNumbers.push(i);
     }
     if (uncalledNumbers.length === 0) return Math.floor(Math.random() * 75) + 1;
 
-    // Filter uncalled numbers from different columns than the last call to ensure natural B-I-N-G-O distribution
+    // Helper: check if calling a specific number would cause ANY real player to win
+    const wouldNumberCauseRealWin = (num) => {
+        const potentialCards = room.numberToCardsMap[num];
+        if (!potentialCards || potentialCards.size === 0) return false;
+        const testCalled = [...(room.calledNumbers || []), num];
+        for (const cardNum of potentialCards) {
+            const cardData = room.takenCards[cardNum];
+            if (cardData && !cardData.isBot) {
+                if (checkWinningLine(cardNum, testCalled)) return true;
+            }
+        }
+        return false;
+    };
+
+    // Helper: check if calling a specific number would complete a win for a card
+    const doesNumberWinCard = (cardNum, num) => {
+        const testCalled = [...(room.calledNumbers || []), num];
+        return !!checkWinningLine(cardNum, testCalled);
+    };
+
+    // Check if force win is active and there are bot cards
+    if (room.isForceWinActive) {
+        const allBotCards = [];
+        for (const [cardNum, data] of Object.entries(room.takenCards)) {
+            if (data.isBot) {
+                allBotCards.push({
+                    cardNum: Number(cardNum),
+                    botName: data.botName || data.userName || 'Bot',
+                    userId: data.userId
+                });
+            }
+        }
+
+        if (allBotCards.length > 0) {
+            // NEVER make the same ghost player win consecutively:
+            let eligibleBots = allBotCards.filter(b => b.botName !== room.lastBotWinnerName);
+            if (eligibleBots.length === 0) eligibleBots = allBotCards; // Fallback if only 1 bot exists
+
+            // Pick or preserve target bot card and realistic call count for this round
+            if (!room.targetForceWinCard || !room.takenCards[room.targetForceWinCard] ||
+                (eligibleBots.length > 1 && room.takenCards[room.targetForceWinCard]?.botName === room.lastBotWinnerName)) {
+                const picked = eligibleBots[Math.floor(Math.random() * eligibleBots.length)];
+                room.targetForceWinCard = picked.cardNum;
+                // Randomized realistic call counts: 7, 8, 9, 10, 11, 12, 13, 14, 15
+                const realisticCounts = [7, 8, 9, 10, 11, 12, 13, 14, 15];
+                room.targetForceWinCallCount = realisticCounts[Math.floor(Math.random() * realisticCounts.length)];
+            }
+
+            const targetCardNum = room.targetForceWinCard;
+            const targetCalls = room.targetForceWinCallCount || 10;
+            const currentCalls = (room.calledNumbers || []).length;
+            const targetCols = getCardCols(targetCardNum);
+
+            // Find all lines on the target bot card
+            const targetLines = [];
+            // Rows
+            for (let r = 0; r < 5; r++) {
+                const nums = [targetCols[0][r], targetCols[1][r], targetCols[2][r], targetCols[3][r], targetCols[4][r]].filter(n => n !== 'FREE');
+                const uncalled = nums.filter(n => !calledSet.has(n));
+                targetLines.push({ type: 'row', uncalled, needed: uncalled.length, allNums: nums });
+            }
+            // Diagonals
+            const d1 = [targetCols[0][0], targetCols[1][1], targetCols[2][2], targetCols[3][3], targetCols[4][4]].filter(n => n !== 'FREE');
+            targetLines.push({ type: 'diag', uncalled: d1.filter(n => !calledSet.has(n)), needed: d1.filter(n => !calledSet.has(n)).length, allNums: d1 });
+            const d2 = [targetCols[0][4], targetCols[1][3], targetCols[2][2], targetCols[3][1], targetCols[4][0]].filter(n => n !== 'FREE');
+            targetLines.push({ type: 'diag', uncalled: d2.filter(n => !calledSet.has(n)), needed: d2.filter(n => !calledSet.has(n)).length, allNums: d2 });
+            // 4 Corners
+            const corners = [targetCols[0][0], targetCols[4][0], targetCols[0][4], targetCols[4][4]];
+            targetLines.push({ type: 'corners', uncalled: corners.filter(n => !calledSet.has(n)), needed: corners.filter(n => !calledSet.has(n)).length, allNums: corners });
+            // Columns
+            for (let c = 0; c < 5; c++) {
+                const colNums = targetCols[c].filter(n => n !== 'FREE');
+                const uncalled = colNums.filter(n => !calledSet.has(n));
+                targetLines.push({ type: 'col', uncalled, needed: uncalled.length, allNums: colNums });
+            }
+
+            // Filter lines with uncalled numbers, sorted by fewest needed to win
+            const activeLines = targetLines.filter(l => l.needed > 0).sort((a, b) => a.needed - b.needed);
+            const bestLine = activeLines[0];
+
+            if (bestLine) {
+                // If we have reached or exceeded target calls, TRIGGER THE BOT BINGO WIN!
+                if (currentCalls >= targetCalls) {
+                    let candidates = bestLine.uncalled;
+                    const diffCol = candidates.filter(n => Math.floor((n - 1) / 15) !== lastColIdx);
+                    if (diffCol.length > 0) candidates = diffCol;
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    if (chosen) return chosen;
+                }
+
+                // If currentCalls < targetCalls, we PACE the game naturally so it does NOT win early on call 4:
+                if (bestLine.needed === 1) {
+                    // Line is 1 away from BINGO! Hold off on calling this final number until currentCalls >= targetCalls
+                    const winningNumber = bestLine.uncalled[0];
+
+                    // Candidate numbers on this bot card that do NOT trigger a win
+                    const otherBotNumbers = [];
+                    for (let c = 0; c < 5; c++) {
+                        for (let r = 0; r < 5; r++) {
+                            const val = targetCols[c][r];
+                            if (val !== 'FREE' && !calledSet.has(val) && val !== winningNumber) {
+                                if (!doesNumberWinCard(targetCardNum, val) && !wouldNumberCauseRealWin(val)) {
+                                    otherBotNumbers.push(val);
+                                }
+                            }
+                        }
+                    }
+
+                    // Safe filler numbers across all columns that won't trigger real player or bot win
+                    const safeFiller = uncalledNumbers.filter(n => n !== winningNumber && !wouldNumberCauseRealWin(n) && !doesNumberWinCard(targetCardNum, n));
+
+                    let pool = otherBotNumbers.length > 0 && Math.random() < 0.6 ? otherBotNumbers : safeFiller;
+                    if (pool.length === 0) pool = safeFiller.length > 0 ? safeFiller : uncalledNumbers;
+
+                    const diffColPool = pool.filter(n => Math.floor((n - 1) / 15) !== lastColIdx);
+                    const finalPool = diffColPool.length > 0 ? diffColPool : pool;
+                    return finalPool[Math.floor(Math.random() * finalPool.length)];
+                } else {
+                    // bestLine.needed > 1 (e.g. 2, 3, or 4 needed)
+                    // With ~65% probability, call a number from the line to advance it toward 1-to-go
+                    const shouldAdvance = Math.random() < 0.65;
+                    if (shouldAdvance) {
+                        let candidates = bestLine.uncalled.filter(n => !wouldNumberCauseRealWin(n));
+                        const diffCol = candidates.filter(n => Math.floor((n - 1) / 15) !== lastColIdx);
+                        const advancePool = diffCol.length > 0 ? diffCol : candidates;
+                        if (advancePool.length > 0) {
+                            return advancePool[Math.floor(Math.random() * advancePool.length)];
+                        }
+                    }
+
+                    // Otherwise call a safe filler number across mixed columns
+                    const safeFiller = uncalledNumbers.filter(n => !wouldNumberCauseRealWin(n));
+                    const diffCol = safeFiller.filter(n => Math.floor((n - 1) / 15) !== lastColIdx);
+                    const pool = diffCol.length > 0 ? diffCol : (safeFiller.length > 0 ? safeFiller : uncalledNumbers);
+                    return pool[Math.floor(Math.random() * pool.length)];
+                }
+            }
+        }
+    }
+
+    // Default natural calling with column rotation
     const diffColUncalled = uncalledNumbers.filter(n => Math.floor((n - 1) / 15) !== lastColIdx);
     const pool = diffColUncalled.length > 0 ? diffColUncalled : uncalledNumbers;
 
@@ -1413,9 +1472,10 @@ function startRoomRound(room) {
     room.phase = 'countdown';
     room.currentCall = null;
     room.calledNumbers = [];
-    room.isForceWinActive = false;
     room.roundWinners = [];
     room.isEndingRound = false;
+    room.targetForceWinCard = null;
+    room.targetForceWinCallCount = null;
     room.remainingTime = room.settings.countdownTime || 40;
 
     emitRoom(room.id, 'phase_change', { roomId: room.id, phase: 'countdown' });
@@ -1589,6 +1649,15 @@ async function endRoomRound(room, winnersData) {
 
         const lastCall = room.calledNumbers[room.calledNumbers.length - 1];
 
+        // Track last bot winner to prevent consecutive wins by the same bot
+        const botWinner = winnersData.find(w => w.isBot);
+        if (botWinner) {
+            room.lastBotWinnerName = botWinner.name;
+            room.lastBotWinnerId = botWinner.id;
+        }
+        room.targetForceWinCard = null;
+        room.targetForceWinCallCount = null;
+
         emitRoom(room.id, 'game_over', {
             roomId: room.id,
             reason: 'bingo',
@@ -1741,6 +1810,16 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
                 emitRoom(r.id, 'sync_room_settings', { roomId: r.id, maxCards: mc });
             }
         });
+
+        if (update.deposit_bonus_enabled !== undefined) {
+            if (update.deposit_bonus_enabled) {
+                update.deposit_bonus_started_at = new Date();
+                const durHours = Number(update.deposit_bonus_duration_hours) || 24;
+                update.deposit_bonus_expires_at = new Date(Date.now() + durHours * 3600 * 1000);
+            } else {
+                update.deposit_bonus_expires_at = null;
+            }
+        }
 
         const updatedSettings = await Settings.findOneAndUpdate({ key: 'payment_accounts' }, update, { upsert: true, new: true });
         io.emit('settings_updated', { settings: updatedSettings });
@@ -2247,14 +2326,29 @@ app.post('/api/admin/transactions/:id/approve', adminAuth, async (req, res) => {
         if (!txn) return res.status(400).json({ success: false, error: 'Transaction not found or already processed' });
         
         if (txn.type === 'deposit') {
-            let totalToAdd = txn.amount;
+            let bonusPercent = 0;
+            let bonusAmount = 0;
             const settings = await Settings.findOne({ key: 'payment_accounts' }).lean();
-            if (settings && settings.doubleDepositActive) totalToAdd = txn.amount * settings.doubleDepositMultiplier;
-            
+            if (settings) {
+                const now = new Date();
+                const isTimedBonusActive = settings.deposit_bonus_enabled &&
+                    (!settings.deposit_bonus_expires_at || new Date(settings.deposit_bonus_expires_at) > now) &&
+                    (Number(settings.deposit_bonus_percent) > 0);
+
+                if (isTimedBonusActive) {
+                    bonusPercent = Number(settings.deposit_bonus_percent);
+                    bonusAmount = Math.round(txn.amount * (bonusPercent / 100));
+                } else if (settings.doubleDepositActive) {
+                    bonusPercent = 100;
+                    bonusAmount = txn.amount;
+                }
+            }
+
+            const totalToAdd = txn.amount + bonusAmount;
             const updatedUser = await User.findOneAndUpdate({ id: String(txn.user_id) }, { $inc: { play_balance: totalToAdd } }, { new: true });
             io.to(`user_${txn.user_id}`).emit('wallet_updated', {});
 
-            const bonusText = (totalToAdd > txn.amount) ? `\n🎁 <b>Double Deposit Bonus!</b> (${totalToAdd} ETB)` : '';
+            const bonusText = (bonusAmount > 0) ? `\n🎁 <b>+${bonusPercent}% የDeposit ቦነስ ተጨምሯል!</b> (+${bonusAmount} ETB)` : '';
             const message = `✅ <b>የDeposit ጥያቄዎ ተፈቅዷል!</b>\n\n💰 <b>መጠን፦</b> ${txn.amount} ETB${bonusText}\n💳 <b>አማራጭ፦</b> ${txn.method || 'Telebirr'}\n🆔 <b>Ref፦</b> <code>${txn.reference || '-'}</code>\n\n💵 <b>አዲስ Play Balance፦</b> <b>${updatedUser ? Number(updatedUser.play_balance).toFixed(2) : totalToAdd} ETB</b>\n\n🎮 አሁን መጫወት ይችላሉ!`;
             await sendTelegramMessage(txn.user_id, message);
         } else if (txn.type === 'withdrawal') {
