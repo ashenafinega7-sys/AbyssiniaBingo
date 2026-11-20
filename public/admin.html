@@ -211,6 +211,7 @@
             <div class="menu-item" onclick="switchPage('users', this)"><i class="fas fa-users"></i> Users Directory</div>
             <div class="menu-item" onclick="switchPage('bots', this)"><i class="fas fa-robot"></i> Ghost Bots</div>
             <div class="menu-item" onclick="switchPage('referrals', this)"><i class="fas fa-network-wired"></i> Referrals</div>
+            <div class="menu-item" onclick="switchPage('invitation-bonus', this)"><i class="fas fa-gift"></i> Invitation Bonus</div>
             <div class="menu-item" onclick="switchPage('promo', this)"><i class="fas fa-tags"></i> Promo Codes</div>
             <div class="menu-item" onclick="switchPage('broadcast', this)"><i class="fas fa-bullhorn"></i> Broadcast</div>
             <div class="menu-item" onclick="switchPage('giveaway', this)"><i class="fas fa-gift"></i> Giveaway</div>
@@ -487,6 +488,59 @@
                 </div>
             </div>
 
+            <!-- ─── Invitation Bonus Settings ─── -->
+            <div id="page-invitation-bonus" class="page">
+                <div class="table-wrapper" style="padding: 25px; max-width: 650px; margin-bottom: 20px;">
+                    <h3 style="margin-bottom: 8px; color: var(--gold);"><i class="fas fa-gift"></i> Invitation & Referral Bonus Control</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
+                        Configure referral reward amounts. Changes take effect immediately across all Telegram bot invite links and Web App players.
+                    </p>
+
+                    <div style="margin-bottom: 18px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="ref-enabled" style="width: 18px; height: 18px;" checked>
+                            <label for="ref-enabled" style="font-size: 14px; font-weight: bold; color: var(--text);">Enable Referral Reward Program</label>
+                        </div>
+                    </div>
+
+                    <!-- Referrer Bonus Amount -->
+                    <div style="margin-bottom: 18px;">
+                        <label style="font-size: 13px; font-weight: bold; color: var(--gold); display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-user-plus"></i> Referrer Bonus / ለጋባዥ የሚሰጥ ቦነስ (ETB)
+                        </label>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">The bonus awarded to the person who invites a friend (credited to Play & Referral balance).</p>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" id="ref-referrer-bonus" class="form-control" style="font-size: 16px; font-weight: 900; color: var(--gold);" value="30">
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referrer', 10)">10</button>
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referrer', 20)">20</button>
+                            <button class="btn btn-warning btn-sm" onclick="setRefPreset('referrer', 30)">30</button>
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referrer', 50)">50</button>
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referrer', 100)">100</button>
+                        </div>
+                    </div>
+
+                    <!-- Referee Bonus Amount -->
+                    <div style="margin-bottom: 22px;">
+                        <label style="font-size: 13px; font-weight: bold; color: var(--success); display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-user-check"></i> Referee (New User) Welcome Bonus / ለተጋባዥ የሚሰጥ ቦነስ (ETB)
+                        </label>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">The welcome bonus given to the new player upon joining through an invite link.</p>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" id="ref-referee-bonus" class="form-control" style="font-size: 16px; font-weight: 900; color: var(--success);" value="20">
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referee', 0)">0</button>
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referee', 10)">10</button>
+                            <button class="btn btn-warning btn-sm" onclick="setRefPreset('referee', 20)">20</button>
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referee', 30)">30</button>
+                            <button class="btn btn-primary btn-sm" onclick="setRefPreset('referee', 50)">50</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success" onclick="saveInvitationBonusSettings()" style="width: 100%; padding: 14px; font-size: 14px;">
+                        <i class="fas fa-broadcast-tower"></i> Save & Broadcast to All Users
+                    </button>
+                </div>
+            </div>
+
             <!-- ─── Game History ─── -->
             <div id="page-history" class="page">
                 <div class="table-wrapper">
@@ -538,6 +592,18 @@
         <div class="info-row"><span>Phone:</span><span id="p-phone">-</span></div>
         <div class="info-row"><span>Games / Wins:</span><span id="p-games-wins">0 / 0</span></div>
         <div class="info-row"><span>Joined:</span><span id="p-joined">-</span></div>
+        <div class="info-row"><span>Invited By (ጋባዥ):</span><span id="p-invited-by" style="color: var(--blue); font-weight: bold;">None</span></div>
+        <div class="info-row"><span>Total Invited (የጋበዛቸው):</span><span id="p-invited-count" style="color: var(--gold); font-weight: bold;">0</span></div>
+
+        <div style="margin-top: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label style="font-size:12px; color:var(--text-muted); font-weight:bold;"><i class="fas fa-users"></i> Users Invited By This Player</label>
+                <span id="p-invited-badge" style="font-size:10px; background:rgba(250,204,21,0.2); color:var(--gold); padding:2px 6px; border-radius:10px;">0 users</span>
+            </div>
+            <div id="p-invited-list" style="max-height: 130px; overflow-y: auto; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 8px; padding: 6px; font-size: 11px;">
+                <span style="color:var(--text-muted);">None</span>
+            </div>
+        </div>
         
         <div style="margin-top: 15px;">
             <label style="font-size:12px; color:var(--text-muted);">Adjust Balance</label>
@@ -665,7 +731,7 @@ function switchPage(pageId, element) {
         game: 'Live Command Center', dashboard: 'Financial Dashboard',
         bots: 'Ghost Bot Simulator', users: 'Users Directory', deposits: 'Deposit Approvals',
         withdrawals: 'Withdrawal Approvals', promo: 'Promo Codes', broadcast: 'Broadcasts',
-        giveaway: 'Giveaways', referrals: 'Referral Leaderboard', history: 'Game History', settings: 'Settings'
+        giveaway: 'Giveaways', referrals: 'Referral Leaderboard', 'invitation-bonus': 'Invitation Bonus Settings', history: 'Game History', settings: 'Settings'
     };
     document.getElementById('page-title').innerText = titles[pageId] || 'Admin';
 
@@ -679,6 +745,7 @@ function switchPage(pageId, element) {
     else if (pageId === 'broadcast') loadBroadcasts();
     else if (pageId === 'giveaway') loadGiveaways();
     else if (pageId === 'referrals') loadReferrals();
+    else if (pageId === 'invitation-bonus') loadInvitationBonusSettings();
     else if (pageId === 'history') loadGameHistory();
     else if (pageId === 'settings') loadGlobalSettings();
 
@@ -707,7 +774,7 @@ function startGameStatusPolling() {
     loadGameStatus();
     gameStatusInterval = setInterval(() => {
         if (currentPage === 'game') loadGameStatus();
-    }, 2500);
+    }, 5000);
 }
 
 async function loadGameStatus() {
@@ -1156,6 +1223,43 @@ async function fetchAndOpenPlayer(id) {
             document.getElementById('adjust-play-bal').value = p.play_balance;
             document.getElementById('adjust-win-bal').value = p.win_balance;
 
+            // Referral / Invitation Details
+            const invByEl = document.getElementById('p-invited-by');
+            if (invByEl) {
+                if (p.invitedBy) {
+                    invByEl.innerHTML = `<span class="user-link" onclick="fetchAndOpenPlayer('${p.invitedBy.id}')">${escapeHtml(p.invitedBy.name || 'User ' + p.invitedBy.id)}</span> <span style="font-size:11px; color:var(--text-muted);">(${p.invitedBy.phone || 'No phone'})</span>`;
+                } else {
+                    invByEl.innerText = 'Direct (None)';
+                }
+            }
+
+            const invCount = p.totalInvitedCount !== undefined ? p.totalInvitedCount : (p.invitedUsers ? p.invitedUsers.length : 0);
+            const countEl = document.getElementById('p-invited-count');
+            if (countEl) countEl.innerText = invCount;
+            const badgeEl = document.getElementById('p-invited-badge');
+            if (badgeEl) badgeEl.innerText = `${invCount} users`;
+
+            const listEl = document.getElementById('p-invited-list');
+            if (listEl) {
+                if (p.invitedUsers && p.invitedUsers.length > 0) {
+                    let itemsHtml = '';
+                    p.invitedUsers.forEach(iu => {
+                        itemsHtml += `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 2px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                                <div>
+                                    <span class="user-link" onclick="fetchAndOpenPlayer('${iu.id}')">${escapeHtml(iu.name || 'User')}</span>
+                                    <span style="font-size:10px; color:var(--text-muted); margin-left:4px;">${iu.phone || ''}</span>
+                                </div>
+                                <span style="color:var(--gold); font-size:10px; font-weight:bold;">${Number(iu.play_balance || 0).toFixed(0)} ETB</span>
+                            </div>
+                        `;
+                    });
+                    listEl.innerHTML = itemsHtml;
+                } else {
+                    listEl.innerHTML = '<span style="color:var(--text-muted); font-size:11px;">No users invited yet.</span>';
+                }
+            }
+
             document.getElementById('player-overlay').classList.add('active');
             document.getElementById('player-panel').classList.add('active');
         }
@@ -1527,8 +1631,61 @@ async function saveGlobalSettings() {
     const dd = document.getElementById('enable-double-deposit').checked;
     try {
         const res = await apiFetch('/api/admin/settings', 'POST', { telebirr_number: tele, telebirr_name: name, doubleDepositActive: dd });
-        if (res.success) showToast('Settings saved!');
+        if (res.success) showToast('Settings saved & broadcast to all users!');
     } catch(e) { showToast('Save failed', true); }
+}
+
+// ─── Invitation Bonus Settings ───
+async function loadInvitationBonusSettings() {
+    try {
+        const d = await apiFetch('/api/settings');
+        if (d.success && d.data) {
+            const en = d.data.referral_enabled !== false;
+            const refBonus = d.data.referral_bonus_referrer !== undefined ? d.data.referral_bonus_referrer : 30;
+            const newBonus = d.data.referral_bonus_referee !== undefined ? d.data.referral_bonus_referee : 20;
+
+            const chk = document.getElementById('ref-enabled');
+            if (chk) chk.checked = en;
+            const refInp = document.getElementById('ref-referrer-bonus');
+            if (refInp) refInp.value = refBonus;
+            const newInp = document.getElementById('ref-referee-bonus');
+            if (newInp) newInp.value = newBonus;
+        }
+    } catch(e) {}
+}
+
+function setRefPreset(type, val) {
+    if (type === 'referrer') {
+        const el = document.getElementById('ref-referrer-bonus');
+        if (el) el.value = val;
+    } else if (type === 'referee') {
+        const el = document.getElementById('ref-referee-bonus');
+        if (el) el.value = val;
+    }
+}
+
+async function saveInvitationBonusSettings() {
+    const enabled = document.getElementById('ref-enabled').checked;
+    const refBonus = Number(document.getElementById('ref-referrer-bonus').value);
+    const newBonus = Number(document.getElementById('ref-referee-bonus').value);
+
+    if (isNaN(refBonus) || refBonus < 0) return showToast('Invalid referrer bonus amount', true);
+    if (isNaN(newBonus) || newBonus < 0) return showToast('Invalid referee bonus amount', true);
+
+    try {
+        const res = await apiFetch('/api/admin/settings', 'POST', {
+            referral_enabled: enabled,
+            referral_bonus_referrer: refBonus,
+            referral_bonus_referee: newBonus
+        });
+        if (res.success) {
+            showToast(`🎉 Invitation Bonus saved & broadcast! (Referrer: ${refBonus} ETB, Referee: ${newBonus} ETB)`);
+        } else {
+            showToast(res.message || 'Failed to save referral settings', true);
+        }
+    } catch(e) {
+        showToast('Error saving referral settings', true);
+    }
 }
 
 // ─── Real-Time Notifications & Web Push ───

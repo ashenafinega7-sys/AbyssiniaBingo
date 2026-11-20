@@ -1124,7 +1124,7 @@ body {
 
     <div class="sec-title"><i class="fas fa-user-plus"></i> የግብዣ ሊንክ (Referral)</div>
     <div class="glass-panel" style="padding:15px; margin-bottom:15px;">
-      <div style="font-size:12px; color:var(--gold); font-weight:800; margin-bottom:8px;">🎁 ጓደኛዎን ሲጋብዙ 30 ብር ያገኛሉ!</div>
+      <div style="font-size:12px; color:var(--gold); font-weight:800; margin-bottom:8px;" id="referral-bonus-text">🎁 ጓደኛዎን ሲጋብዙ <span id="referral-bonus-display">30</span> ብር ያገኛሉ!</div>
       <input type="text" id="invite-link-input" class="form-input" readonly>
       <button class="submit-req-btn" onclick="copyInviteLink()"><i class="fas fa-share-alt"></i> ሊንኩን ቅዳና አጋራ</button>
     </div>
@@ -2061,6 +2061,56 @@ socket.on('sync_room_settings', (data) => {
   }
 });
 
+// Real-Time Global Settings Sync (Admin broadcast without reload)
+socket.on('settings_updated', (data) => {
+  const s = data?.settings || data;
+  if (!s) return;
+  if (s.referral_bonus_referrer !== undefined) {
+    const amtEl = document.getElementById('referral-bonus-display');
+    if (amtEl) amtEl.innerText = s.referral_bonus_referrer;
+  }
+  if (s.telebirr_number) {
+    const noEl = document.getElementById('dep-telebirr-no');
+    if (noEl) noEl.innerText = s.telebirr_number;
+  }
+  if (s.telebirr_name) {
+    const nmEl = document.getElementById('dep-telebirr-name');
+    if (nmEl) nmEl.innerText = s.telebirr_name;
+  }
+  const ddb = document.getElementById('double-deposit-banner');
+  if (ddb) {
+    if (s.doubleDepositActive) ddb.classList.remove('hidden');
+    else ddb.classList.add('hidden');
+  }
+});
+
+async function loadAppSettings() {
+  try {
+    const res = await fetch('/api/settings');
+    const d = await res.json();
+    if (d.success && d.data) {
+      const s = d.data;
+      if (s.referral_bonus_referrer !== undefined) {
+        const amtEl = document.getElementById('referral-bonus-display');
+        if (amtEl) amtEl.innerText = s.referral_bonus_referrer;
+      }
+      if (s.telebirr_number) {
+        const noEl = document.getElementById('dep-telebirr-no');
+        if (noEl) noEl.innerText = s.telebirr_number;
+      }
+      if (s.telebirr_name) {
+        const nmEl = document.getElementById('dep-telebirr-name');
+        if (nmEl) nmEl.innerText = s.telebirr_name;
+      }
+      const ddb = document.getElementById('double-deposit-banner');
+      if (ddb) {
+        if (s.doubleDepositActive) ddb.classList.remove('hidden');
+        else ddb.classList.add('hidden');
+      }
+    }
+  } catch(e) {}
+}
+
 socket.on('new_number_called', (data) => {
   if (data.roomId && data.roomId !== currentRoomId) return;
   calledNumbersSet.add(data.number);
@@ -2186,6 +2236,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGrid();
   updateCardCounter();
   loadRooms();
+  loadAppSettings();
   updateNavPill('ticket');
   setTimeout(hideLoadingScreen, 800);
 });

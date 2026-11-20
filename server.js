@@ -148,7 +148,10 @@ const SettingsSchema = new mongoose.Schema({
     ]},
     mega_jackpot_pool: { type: Number, default: 5000 },
     jackpot_call_threshold: { type: Number, default: 48 },
-    jackpot_seed: { type: Number, default: 2500 }
+    jackpot_seed: { type: Number, default: 2500 },
+    referral_bonus_referrer: { type: Number, default: 30 },
+    referral_bonus_referee: { type: Number, default: 20 },
+    referral_enabled: { type: Boolean, default: true }
 }, { collection: 'settings' });
 
 const GiveawaySchema = new mongoose.Schema({
@@ -254,7 +257,7 @@ const BOT_TEXTS = {
         wd_enter_phone: "📱 እባክዎ ወደሚወጣበትን የቴሌብር/ባንክ <b>ስልክ ቁጥር</b> ያስገቡ፦",
         wd_success: "✅ <b>የWithdraw ጥያቄዎ ተልኳል!</b>\n\n👤 ስም፦ {name}\n💳 አማራጭ፦ {method}\n💰 መጠን፦ {amount} ETB\n📱 ስልክ፦ {phone}\n\n⏳ <b>እባክዎ አድሚን እስኪያጸድቅ ይጠብቁ።</b>",
         bal_msg: "💵 <b>የሂሳብ ማጠቃለያ</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>አጠቃላይ ባላንስ፦ {total} ETB</b>",
-        invite_msg: "🔗 <b>የእርስዎ የግብዣ ሊንክ፦</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 ወዳጅዎን ሲጋብዙ 30 ብር ያገኛሉ! ጓደኛዎም 20 ብር ያገኛል።",
+        invite_msg: "🔗 <b>የእርስዎ የግብዣ ሊንክ፦</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 ወዳጅዎን ሲጋብዙ {ref_bonus} ብር ያገኛሉ! ጓደኛዎም {new_bonus} ብር ያገኛል።",
         support_msg: "💬 ማንኛውም ጥያቄ ካለዎት በ @Tazikes ያግኙን።",
         history_msg: "📜 ታሪክዎን ለማየት ከዚህ በታች ይጫኑ፦",
         help_msg: "📚 <b>የቦት ትዕዛዞች እና አጋዥ መረጃ</b>\n\n/start - ቦቱን እንደገና ለመጀመር\n/play - ጨዋታውን ለመጫወት\n/balance - ባላንስዎን ለማየት\n/deposit - ገንዘብ ለማስገባት\n/withdraw - ገንዘብ ለማውጣት\n/invite - የግብዣ ሊንክ ለማግኘት\n/support - እርዳታ ለማግኘት\n/lang - ቋንቋ ለመቀየር\n\n💡 <i>ማንኛውንም አዝራር በመጫን ቦቱን መጠቀም ይችላሉ።</i>",
@@ -267,7 +270,7 @@ const BOT_TEXTS = {
         gw_expired: "⏳ <b>ይቅርታ!</b>\n\nይህ ቦነስ ጊዜው አልፎበታል ወይም ተጠቃሚዎች ሙሉውን ወስደዋል። በሚቀጥለው ጊዜ ይሞክሩ!",
         gw_claimed: "⚠️ ይህን ቦነስ አስቀድመው አግኝተዋል።",
         gw_error: "❌ ስህተት ተከስቷል። እባክዎ በኋላ ይሞክሩ።",
-        rules_msg: "🎯 <b>የ Abyssinia Bingo ሙሉ ህግጋት እና መመሪያዎች</b>\n\n1️⃣ <b>የጨዋታ ህግ እና አጫወት (Gameplay)</b>\n* የ 1 ካርቴላ ዋጋ 10 ብር ሲሆን፣ በአንድ ጨዋታ እስከ 4 ካርቴላ ድረስ መያዝ ይችላሉ።\n* እያንዳንዱ ካርቴላ ላይ ከ 1 እስከ 75 ባሉት ቁጥሮች ውስጥ የተበተኑ 24 የእድል ቁጥሮች ያገኛሉ (የመሃሉ ሳጥን FREE/ነፃ ነው)።\n\n2️⃣ <b>የማሸነፊያ መስፈርቶች (Winning Conditions)</b>\n* አግድም (Row), ቀጥ ያለ (Col), ሰያፍ (Diagonal) ወይም 4 ማዕዘናት (4 Corners)።\n* የመጨረሻው የተጠራው ቁጥር በእርስዎ የማሸነፊያ መስመር ላይ መሆን አለበት።\n\n3️⃣ <b>የሽልማት ክፍፍል (Prize Distribution)</b>\n* የደራሽ መጠን በዚያ ዙር ከተሸጡት ካርቴላዎች የተሰበሰበው ጠቅላላ ገንዘብ ነው።\n\n4️⃣ <b>ዲፖዚት፣ ዊዝድራው እና ቦነስ</b>\n* ዝቅተኛው የወጭ መጠን 100 ብር ነው።\n* ወዳጅ ሲጋብዙ 30 ብር ያገኛሉ፤ ጓደኛዎ 20 ብር ያገኛል።\n\n🎮 መልካም እድል!"
+        rules_msg: "🎯 <b>የ Abyssinia Bingo ሙሉ ህግጋት እና መመሪያዎች</b>\n\n1️⃣ <b>የጨዋታ ህግ እና አጫወት (Gameplay)</b>\n* የ 1 ካርቴላ ዋጋ 10 ብር ሲሆን፣ በአንድ ጨዋታ እስከ 4 ካርቴላ ድረስ መያዝ ይችላሉ።\n* እያንዳንዱ ካርቴላ ላይ ከ 1 እስከ 75 ባሉት ቁጥሮች ውስጥ የተበተኑ 24 የእድል ቁጥሮች ያገኛሉ (የመሃሉ ሳጥን FREE/ነፃ ነው)።\n\n2️⃣ <b>የማሸነፊያ መስፈርቶች (Winning Conditions)</b>\n* አግድም (Row), ቀጥ ያለ (Col), ሰያፍ (Diagonal) ወይም 4 ማዕዘናት (4 Corners)።\n* የመጨረሻው የተጠራው ቁጥር በእርስዎ የማሸነፊያ መስመር ላይ መሆን አለበት።\n\n3️⃣ <b>የሽልማት ክፍፍል (Prize Distribution)</b>\n* የደራሽ መጠን በዚያ ዙር ከተሸጡት ካርቴላዎች የተሰበሰበው ጠቅላላ ገንዘብ ነው።\n\n4️⃣ <b>ዲፖዚት፣ ዊዝድራው እና ቦነስ</b>\n* ዝቅተኛው የወጭ መጠን 100 ብር ነው።\n* ወዳጅ ሲጋብዙ {ref_bonus} ብር ያገኛሉ፤ ጓደኛዎ {new_bonus} ብር ያገኛል።\n\n🎮 መልካም እድል!"
     },
     en: {
         register_first: "👋 <b>Welcome!</b>\n\nTo get started, please share your phone number.",
@@ -289,7 +292,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>Choose a bank to withdraw:</b>", wd_enter_amt: "💸 Enter the amount (min 100 ETB):",
         wd_enter_phone: "📱 Enter the Phone number:", wd_success: "✅ <b>Withdraw Request Sent!</b>\n\n👤 Name: {name}\n💳 Method: {method}\n💰 Amount: {amount} ETB\n📱 Phone: {phone}\n\n⏳ <b>Wait for Admin approval.</b>",
         bal_msg: "💵 <b>Balance Summary</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>Total Balance: {total} ETB</b>",
-        invite_msg: "🔗 <b>Your Invite Link:</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 Invite a friend and get 30 ETB! They get 20 ETB.",
+        invite_msg: "🔗 <b>Your Invite Link:</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 Invite a friend and get {ref_bonus} ETB! They get {new_bonus} ETB.",
         support_msg: "💬 Contact @Tazikes.", history_msg: "📜 Click below to view your history:",
         help_msg: "📚 <b>Bot Commands</b>\n\n/start - Restart\n/play - Play\n/balance - Balance\n/deposit - Deposit\n/withdraw - Withdraw\n/invite - Invite\n/support - Support\n/lang - Language\n\n💡 <i>Use the buttons below.</i>",
         leaderboard_msg: "🏆 Click below to view the leaderboard:",
@@ -300,7 +303,7 @@ const BOT_TEXTS = {
         gw_success: "🎉 <b>Congratulations!</b>\n\nYou have successfully claimed {amount} ETB bonus. It is now in your Play Wallet.",
         gw_expired: "⏳ <b>Sorry!</b>\n\nThis giveaway has expired or all bonuses have been claimed. Try again next time!",
         gw_claimed: "⚠️ You already claimed this bonus.", gw_error: "❌ Error occurred. Try again later.",
-        rules_msg: "🎯 <b>Abyssinia Bingo Rules & Guidelines</b>\n\n1️⃣ <b>Gameplay</b>\n* 1 Card is 10 ETB. You can hold up to 4 cards per game.\n* Each card has 24 random numbers from 1 to 75 (Center is FREE).\n\n2️⃣ <b>Winning Conditions</b>\n* Horizontal, Vertical, Diagonal, or 4 Corners.\n* The last called number must be part of your winning line.\n\n3️⃣ <b>Withdrawal & Bonus</b>\n* Minimum withdrawal: 100 ETB.\n* Invite a friend: Get 30 ETB bonus, they get 20 ETB.\n\n🎮 Good luck!"
+        rules_msg: "🎯 <b>Abyssinia Bingo Rules & Guidelines</b>\n\n1️⃣ <b>Gameplay</b>\n* 1 Card is 10 ETB. You can hold up to 4 cards per game.\n* Each card has 24 random numbers from 1 to 75 (Center is FREE).\n\n2️⃣ <b>Winning Conditions</b>\n* Horizontal, Vertical, Diagonal, or 4 Corners.\n* The last called number must be part of your winning line.\n\n3️⃣ <b>Withdrawal & Bonus</b>\n* Minimum withdrawal: 100 ETB.\n* Invite a friend: Get {ref_bonus} ETB bonus, they get {new_bonus} ETB.\n\n🎮 Good luck!"
     },
     ti: {
         register_first: "👋 <b>እንቋዕ ደሓን መጻእኩም!</b>\n\nንምጅማር በጃኹም ቁጽሪ ተሌፎንኩም ኣካፍሉ።",
@@ -322,7 +325,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>ናብ ኣየናይ ባንክ ክትወጽኡ ትደልዩ?</b>", wd_enter_amt: "💸 እባክዎ ክትወጽኡ ትደልዩ መጠን ኣእትዉ (ዝቕነይ 100 ETB)፦",
         wd_enter_phone: "📱 እባክዎ ናይ ተሌፎን ቁጽሪ ኣእትዉ፦", wd_success: "✅ <b>ናይ Withdraw ሕቶኹም ተላኢኹ!</b>\n\n👤 ስም፦ {name}\n💳 ኣማራጺ፦ {method}\n💰 መጠን፦ {amount} ETB\n📱 ስልኪ፦ {phone}\n\n⏳ <b>ንኣድሚን ጽበዩ።</b>",
         bal_msg: "💵 <b>ናይ ሂሳብ ጥርዓን</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>ጠቕላላ ባላንስ፦ {total} ETB</b>",
-        invite_msg: "🔗 <b>ናይ ዕድመ ሊንክኩም፦</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 ዓርኪኹም ምስ ትዕድሙ 30 ብር ትረኽቡ! ንሳቶም ድማ 20 ብር ይረኽቡ።",
+        invite_msg: "🔗 <b>ናይ ዕድመ ሊንክኩም፦</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 ዓርኪኹም ምስ ትዕድሙ {ref_bonus} ብር ትረኽቡ! ንሳቶም ድማ {new_bonus} ብር ይረኽቡ።",
         support_msg: "💬 ዝኾነ ሕቶ እንተሎኩም ብ @Tazikes ርኸቡና።", history_msg: "📜 ታሪኽኩም ንምርኣይ ኣብ ታሕቲ ጠውቑ፦",
         help_msg: "📚 <b>ናይ ቦት ትእዛዛት</b>\n\n/start - ቦት ንምጅማር\n/play - ንምጽዋት\n/balance - ባላንስ\n/deposit - ኣታዊ\n/withdraw - ወጻኢ\n/invite - ዕድመ\n/support - ደገፍ\n/lang - ቋንቋ",
         leaderboard_msg: "🏆 ደረጃ ንምርኣይ ኣብ ታሕቲ ጠውቑ፦",
@@ -355,7 +358,7 @@ const BOT_TEXTS = {
         wd_choose: "🏦 <b>Baankii baasii barbaaddan filadhaa:</b>", wd_enter_amt: "💸 Hanga baasii galchaa (xiqqaatee 100 ETB):",
         wd_enter_phone: "📱 Lakkoofsa bilbila galchaa:", wd_success: "✅ <b>Gaaffiin Baasii Ergameera!</b>\n\n👤 Maqaa: {name}\n💳 Mala: {method}\n💰 Hanga: {amount} ETB\n📱 Bilbila: {phone}\n\n⏳ <b>Admin eegaa.</b>",
         bal_msg: "💵 <b>Cuunfaa Hajaa</b>\n\n🟢 Play Wallet: <b>{play} ETB</b>\n🟡 Win Wallet: <b>{win} ETB</b>\n👥 Referral Bonus: <b>{ref} ETB</b>\n\n💳 <b>Hajaa Waliigalaa: {total} ETB</b>",
-        invite_msg: "🔗 <b>Liinkii Affeera Keessan:</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 Hiriyyaa affeeruun 30 ETB argadhaa! Isaanis 20 ETB argatu.",
+        invite_msg: "🔗 <b>Liinkii Affeera Keessan:</b>\nhttps://t.me/ethiobongo_bot?start={id}\n\n🎁 Hiriyyaa affeeruun {ref_bonus} ETB argadhaa! Isaanis {new_bonus} ETB argatu.",
         support_msg: "💬 Gaaffii yoo qabaattan @Tazikes qunnamaa.", history_msg: "📜 Seenaa keessan ilaaluuf gadii tuqaa:",
         help_msg: "📚 <b>Ajaja Bot</b>\n\n/start - Jalqabi\n/play - Taphadhu\n/balance - Hajaa\n/deposit - Galii\n/withdraw - Baasii\n/invite - Affeera\n/support - Deeggarsa\n/lang - Afaan",
         leaderboard_msg: "🏆 Sadarkaa ilaaluuf gadii tuqaa:",
@@ -373,7 +376,8 @@ const BOT_TEXTS = {
 function getBotText(lang, key, params = {}) {
     const l = (lang && BOT_TEXTS[lang]) ? lang : 'am';
     let text = BOT_TEXTS[l]?.[key] || BOT_TEXTS['en']?.[key] || BOT_TEXTS['am']?.[key] || '';
-    for (const [k, v] of Object.entries(params)) {
+    const merged = { ref_bonus: 30, new_bonus: 20, ...params };
+    for (const [k, v] of Object.entries(merged)) {
         text = text.replaceAll(`{${k}}`, v);
     }
     return text;
@@ -505,10 +509,16 @@ async function handleTelegramUpdate(update) {
             if (dbUser.pending_referrer && dbUser.pending_referrer !== userId) {
                 const referrer = await User.findOne({ id: dbUser.pending_referrer });
                 if (referrer && !dbUser.referred_by) {
+                    const settings = await Settings.findOne({ key: 'payment_accounts' }).lean();
+                    const refBonus = (settings && settings.referral_bonus_referrer !== undefined) ? Number(settings.referral_bonus_referrer) : 30;
+                    const newBonus = (settings && settings.referral_bonus_referee !== undefined) ? Number(settings.referral_bonus_referee) : 20;
+
                     dbUser.referred_by = dbUser.pending_referrer;
-                    dbUser.play_balance = (dbUser.play_balance || 0) + 20;
+                    if (newBonus > 0) dbUser.play_balance = (dbUser.play_balance || 0) + newBonus;
                     await dbUser.save();
-                    await User.updateOne({ id: dbUser.pending_referrer }, { $inc: { play_balance: 30, referral_balance: 30 } });
+                    if (refBonus > 0) {
+                        await User.updateOne({ id: dbUser.pending_referrer }, { $inc: { play_balance: refBonus, referral_balance: refBonus } });
+                    }
                     io.to(`user_${dbUser.pending_referrer}`).emit('wallet_updated', {});
                     io.to(`user_${userId}`).emit('wallet_updated', {});
                     dbUser.pending_referrer = null;
@@ -686,10 +696,16 @@ async function handleTelegramUpdate(update) {
                     dbUser.pending_referrer = parts[1].trim();
                     await dbUser.save();
                 } else if (!dbUser.referred_by && dbUser.registered) {
+                    const settings = await Settings.findOne({ key: 'payment_accounts' }).lean();
+                    const refBonus = (settings && settings.referral_bonus_referrer !== undefined) ? Number(settings.referral_bonus_referrer) : 30;
+                    const newBonus = (settings && settings.referral_bonus_referee !== undefined) ? Number(settings.referral_bonus_referee) : 20;
+
                     dbUser.referred_by = parts[1].trim();
-                    dbUser.play_balance = (dbUser.play_balance || 0) + 20;
+                    if (newBonus > 0) dbUser.play_balance = (dbUser.play_balance || 0) + newBonus;
                     await dbUser.save();
-                    await User.updateOne({ id: parts[1].trim() }, { $inc: { play_balance: 30, referral_balance: 30 } });
+                    if (refBonus > 0) {
+                        await User.updateOne({ id: parts[1].trim() }, { $inc: { play_balance: refBonus, referral_balance: refBonus } });
+                    }
                     io.to(`user_${parts[1].trim()}`).emit('wallet_updated', {});
                     io.to(`user_${userId}`).emit('wallet_updated', {});
                 }
@@ -784,7 +800,10 @@ async function handleTelegramUpdate(update) {
         // Invite Command or Button
         const isInviteBtn = Object.values(BOT_TEXTS).some(d => d.menu_invite === text) || text === '/invite';
         if (isInviteBtn) {
-            await sendTelegramMessage(chatId, t('invite_msg', { id: userId }), 'HTML');
+            const settings = await Settings.findOne({ key: 'payment_accounts' }).lean();
+            const refBonus = (settings && settings.referral_bonus_referrer !== undefined) ? Number(settings.referral_bonus_referrer) : 30;
+            const newBonus = (settings && settings.referral_bonus_referee !== undefined) ? Number(settings.referral_bonus_referee) : 20;
+            await sendTelegramMessage(chatId, t('invite_msg', { id: userId, ref_bonus: refBonus, new_bonus: newBonus }), 'HTML');
             return;
         }
 
@@ -1228,24 +1247,97 @@ function startRoomBotSpawning(room) {
 }
 
 function getNextNumberToCall(room) {
+    const calledSet = new Set(room.calledNumbers || []);
+    const lastNum = room.currentCall;
+    const lastColIdx = (lastNum && lastNum >= 1 && lastNum <= 75) ? Math.min(4, Math.floor((lastNum - 1) / 15)) : -1;
+
+    // Check if force win is active and there are bots
     if (room.isForceWinActive) {
+        const botCards = [];
         for (const [cardNum, data] of Object.entries(room.takenCards)) {
-            if (!data.isBot) continue;
-            const cols = getCardCols(Number(cardNum));
-            for (const col of cols) {
-                for (const num of col) {
-                    if (num !== 'FREE' && !room.calledNumbers.includes(num)) {
-                        return num;
+            if (data.isBot) botCards.push(Number(cardNum));
+        }
+
+        if (botCards.length > 0) {
+            // Find possible winning lines across bot cards (rows, diagonals, 4 corners, cols)
+            // Rows, diagonals, and 4 corners naturally use numbers from multiple columns (B, I, N, G, O)
+            const candidateLines = [];
+
+            for (const cn of botCards) {
+                const cols = getCardCols(cn);
+
+                // 1. Rows (spans all 5 columns: B, I, N, G, O)
+                for (let r = 0; r < 5; r++) {
+                    const lineNums = [cols[0][r], cols[1][r], cols[2][r], cols[3][r], cols[4][r]].filter(n => n !== 'FREE');
+                    const uncalled = lineNums.filter(n => !calledSet.has(n));
+                    if (uncalled.length > 0) {
+                        candidateLines.push({ type: 'row', cardNum: cn, uncalled, needed: uncalled.length });
                     }
+                }
+
+                // 2. Diagonals (spans all 5 columns: B, I, N, G, O)
+                const d1Nums = [cols[0][0], cols[1][1], cols[2][2], cols[3][3], cols[4][4]].filter(n => n !== 'FREE');
+                const uncalledD1 = d1Nums.filter(n => !calledSet.has(n));
+                if (uncalledD1.length > 0) {
+                    candidateLines.push({ type: 'diag', cardNum: cn, uncalled: uncalledD1, needed: uncalledD1.length });
+                }
+
+                const d2Nums = [cols[0][4], cols[1][3], cols[2][2], cols[3][1], cols[4][0]].filter(n => n !== 'FREE');
+                const uncalledD2 = d2Nums.filter(n => !calledSet.has(n));
+                if (uncalledD2.length > 0) {
+                    candidateLines.push({ type: 'diag', cardNum: cn, uncalled: uncalledD2, needed: uncalledD2.length });
+                }
+
+                // 3. 4 Corners (spans B and O)
+                const cornerNums = [cols[0][0], cols[4][0], cols[0][4], cols[4][4]];
+                const uncalledCorners = cornerNums.filter(n => !calledSet.has(n));
+                if (uncalledCorners.length > 0) {
+                    candidateLines.push({ type: 'corners', cardNum: cn, uncalled: uncalledCorners, needed: uncalledCorners.length });
+                }
+
+                // 4. Columns
+                for (let c = 0; c < 5; c++) {
+                    const colNums = cols[c].filter(n => n !== 'FREE');
+                    const uncalledCol = colNums.filter(n => !calledSet.has(n));
+                    if (uncalledCol.length > 0) {
+                        candidateLines.push({ type: 'col', cardNum: cn, uncalled: uncalledCol, needed: uncalledCol.length });
+                    }
+                }
+            }
+
+            if (candidateLines.length > 0) {
+                // Sort by least numbers needed to win
+                candidateLines.sort((a, b) => a.needed - b.needed);
+                const bestLine = candidateLines[0];
+
+                // With ~70% chance (or 100% if 1 away from bingo or mid-game), call an uncalled number from the bot's winning line
+                const shouldCallBotLine = bestLine.needed === 1 || Math.random() < 0.72 || (room.calledNumbers && room.calledNumbers.length > 25);
+                if (shouldCallBotLine) {
+                    let candidates = bestLine.uncalled;
+                    // Filter candidates that belong to a DIFFERENT column than the last call to ensure mixed variety
+                    const diffColCandidates = candidates.filter(num => Math.floor((num - 1) / 15) !== lastColIdx);
+                    if (diffColCandidates.length > 0) {
+                        candidates = diffColCandidates;
+                    }
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    if (chosen) return chosen;
                 }
             }
         }
     }
-    let num;
-    do {
-        num = Math.floor(Math.random() * 75) + 1;
-    } while (room.calledNumbers.includes(num));
-    return num;
+
+    // Default natural calling with column rotation
+    const uncalledNumbers = [];
+    for (let i = 1; i <= 75; i++) {
+        if (!calledSet.has(i)) uncalledNumbers.push(i);
+    }
+    if (uncalledNumbers.length === 0) return Math.floor(Math.random() * 75) + 1;
+
+    // Filter uncalled numbers from different columns than the last call to ensure natural B-I-N-G-O distribution
+    const diffColUncalled = uncalledNumbers.filter(n => Math.floor((n - 1) / 15) !== lastColIdx);
+    const pool = diffColUncalled.length > 0 ? diffColUncalled : uncalledNumbers;
+
+    return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function emitRoom(roomId, event, data) {
@@ -1866,29 +1958,39 @@ app.post('/api/admin/auto-game', adminAuth, (req, res) => {
     return app._router.handle(req, res, () => {});
 });
 
-// Admin Game Status
+// Admin Game Status (High-Performance Lean Serialization)
 app.get('/api/admin/game-status', adminAuth, async (req, res) => {
     try {
         const roomId = req.query.roomId || 'classic_10';
         const room = rooms[roomId] || rooms['classic_10'];
-
-        const realPlayersIds = [...new Set(Object.values(room.takenCards).filter(c => !c.isBot).map(c => c.userId))];
-        const realPlayers = await User.find({ id: { $in: realPlayersIds } }, { id: 1, name: 1, play_balance: 1, win_balance: 1 }).lean();
-        const playerMap = new Map(realPlayers.map(p => [p.id, p.name]));
-        const playerBalanceMap = new Map(realPlayers.map(p => [p.id, { play: p.play_balance || 0, win: p.win_balance || 0 }]));
 
         const takenCardsDetails = {};
         const calledSet = new Set(room.calledNumbers || []);
         const liveCardsLeaderboard = [];
         const playerMapSummary = new Map();
 
+        let realPlayersCount = 0;
+        let realCardsCount = 0;
+        let botsCount = 0;
+
         for (const [card, data] of Object.entries(room.takenCards)) {
             const cardNum = Number(card);
-            const pName = data.isBot ? data.botName : (data.userName || playerMap.get(data.userId) || "Player");
+            const isBot = !!data.isBot;
+            const pName = isBot ? data.botName : (data.userName || "Player");
+
+            if (isBot) {
+                botsCount++;
+            } else {
+                realCardsCount++;
+                if (!playerMapSummary.has(data.userId)) {
+                    realPlayersCount++;
+                }
+            }
+
             takenCardsDetails[card] = {
                 userId: data.userId,
                 userName: pName,
-                isBot: !!data.isBot
+                isBot
             };
 
             const distance = getCardDistance(cardNum, room.calledNumbers || []);
@@ -1901,27 +2003,28 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
             });
             const percent = Math.min(100, Math.round((matchedCount / 24) * 100));
 
+            // Ultra-lean object without heavy 5x5 'cols' array: saves ~3MB per request!
             liveCardsLeaderboard.push({
                 cardNum,
                 userId: data.userId,
                 userName: pName,
-                isBot: !!data.isBot,
+                isBot,
                 distance,
                 matchedCount,
-                percent,
-                cols
+                percent
             });
 
-            if (!playerMapSummary.has(data.userId)) {
-                playerMapSummary.set(data.userId, {
-                    userId: data.userId,
-                    name: pName,
-                    isBot: !!data.isBot,
-                    balances: playerBalanceMap.get(data.userId) || { play: 0, win: 0 },
-                    cards: []
-                });
+            if (!isBot && data.userId) {
+                if (!playerMapSummary.has(data.userId)) {
+                    playerMapSummary.set(data.userId, {
+                        userId: data.userId,
+                        name: pName,
+                        isBot: false,
+                        cards: []
+                    });
+                }
+                playerMapSummary.get(data.userId).cards.push(cardNum);
             }
-            playerMapSummary.get(data.userId).cards.push(cardNum);
         }
 
         // Cartelas that complete more than the other appear at the top!
@@ -1931,10 +2034,9 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
             return b.percent - a.percent;
         });
 
+        // Slice top 60 cards closest to winning: reduces DOM operations and bandwidth by 95%!
+        const topLeaderboard = liveCardsLeaderboard.slice(0, 60);
         const activePlayersList = Array.from(playerMapSummary.values());
-
-        const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
-        const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
         const totalActualCards = realCardsCount + botsCount;
 
         const sanitizedRoom = {
@@ -1964,10 +2066,10 @@ app.get('/api/admin/game-status', adminAuth, async (req, res) => {
             data: {
                 ...sanitizedRoom,
                 takenCardsDetails,
-                liveCardsLeaderboard,
+                liveCardsLeaderboard: topLeaderboard,
                 activePlayersList,
                 totalPlayers: totalActualCards,
-                realPlayersCount: realPlayersIds.length,
+                realPlayersCount,
                 totalCards: totalActualCards,
                 derash: totalActualCards * (room.derashPerCard || 8),
                 rooms: Object.values(rooms).map(r => ({ id: r.id, name: r.name, phase: r.phase, cards: Object.keys(r.takenCards).length }))
@@ -2050,8 +2152,34 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
 });
 
 app.get('/api/admin/users/:id', adminAuth, async (req, res) => {
-    try { const user = await User.findOne({ id: req.params.id }).lean(); if (!user) return res.status(404).json({ success: false }); res.json({ success: true, data: user }); }
-    catch (e) { res.status(500).json({ success: false }); }
+    try {
+        const user = await User.findOne({ id: req.params.id }).lean();
+        if (!user) return res.status(404).json({ success: false });
+
+        // 1. Who invited him?
+        let invitedBy = null;
+        if (user.referred_by) {
+            invitedBy = await User.findOne({ id: String(user.referred_by) }, { id: 1, name: 1, username: 1, phone: 1 }).lean();
+        }
+
+        // 2. Who did this user invite?
+        const invitedUsers = await User.find(
+            { referred_by: String(req.params.id) },
+            { id: 1, name: 1, username: 1, phone: 1, registered_at: 1, play_balance: 1, win_balance: 1 }
+        ).sort({ registered_at: -1 }).limit(100).lean();
+
+        res.json({
+            success: true,
+            data: {
+                ...user,
+                invitedBy: invitedBy || (user.referred_by ? { id: user.referred_by, name: 'User ' + user.referred_by } : null),
+                invitedUsers: invitedUsers || [],
+                totalInvitedCount: invitedUsers ? invitedUsers.length : 0
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
 app.post('/api/admin/users/:id/balance', adminAuth, async (req, res) => {
@@ -2178,8 +2306,20 @@ app.post('/api/user/referral', async (req, res) => {
         if (newUser && newUser.referred_by) return res.status(400).json({ success: false, error: 'Already referred' });
         const referrer = await User.findOne({ id: String(referrer_id) });
         if (!referrer) return res.status(404).json({ success: false, error: 'Referrer not found' });
-        await User.updateOne({ id: String(referrer_id) }, { $inc: { play_balance: 30, referral_balance: 30 } });
-        await User.findOneAndUpdate({ id: String(new_user_id) }, { $inc: { play_balance: 20 }, $set: { referred_by: String(referrer_id), name: new_user_name || 'Player' } }, { upsert: true });
+
+        let refBonus = 30;
+        let newBonus = 20;
+        try {
+            const st = await Settings.findOne({ key: 'payment_accounts' }).lean();
+            if (st) {
+                if (st.referral_enabled === false) return res.status(400).json({ success: false, error: 'Referral program is paused' });
+                if (st.referral_bonus_referrer !== undefined) refBonus = Number(st.referral_bonus_referrer);
+                if (st.referral_bonus_referee !== undefined) newBonus = Number(st.referral_bonus_referee);
+            }
+        } catch(e) {}
+
+        await User.updateOne({ id: String(referrer_id) }, { $inc: { play_balance: refBonus, referral_balance: refBonus } });
+        await User.findOneAndUpdate({ id: String(new_user_id) }, { $inc: { play_balance: newBonus }, $set: { referred_by: String(referrer_id), name: new_user_name || 'Player' } }, { upsert: true });
         io.to(`user_${referrer_id}`).emit('wallet_updated', {});
         io.to(`user_${new_user_id}`).emit('wallet_updated', {});
         res.json({ success: true, message: 'Referral bonus applied' });
