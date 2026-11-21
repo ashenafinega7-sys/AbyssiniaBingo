@@ -999,6 +999,177 @@ body {
   min-height: 16px;
   margin-bottom: 4px;
 }
+
+.guide-header-btn {
+  background: rgba(59, 130, 246, 0.18);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  color: #60a5fa;
+  padding: 5px 11px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.guide-header-btn:active {
+  transform: scale(0.95);
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.interactive-cell.daub-pulse {
+  animation: daubStamp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes daubStamp {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1.02); }
+}
+.interactive-cell.invalid-cell-shake {
+  animation: cellShake 0.35s ease-in-out;
+  border-color: #ef4444 !important;
+}
+@keyframes cellShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+/* ─── Guide & Terms Modals ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 11, 20, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99998;
+  padding: 14px;
+  animation: fadeInModal 0.25s ease-out;
+}
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--glass-border);
+}
+.modal-header {
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--glass-border);
+}
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close-btn:hover { color: #fff; }
+.modal-scroll-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.guide-step-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.guide-step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.step-badge {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+.step-title {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--gold);
+}
+.step-body {
+  font-size: 11.5px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.patterns-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.pattern-item {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pattern-name {
+  font-size: 10px;
+  font-weight: bold;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 12px);
+  gap: 2px;
+}
+.mg-cell {
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+.mg-cell.hit {
+  background: var(--gold);
+  box-shadow: 0 0 5px var(--gold-glow);
+}
+.mg-cell.free {
+  font-size: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -1015,8 +1186,11 @@ body {
     <div class="brand-title">ABYSSINIA BINGO</div>
   </div>
 
-  <div class="header-user-wallet" onclick="switchTab('wallet')">
-    <div class="wallet-pill">
+  <div class="header-user-wallet">
+    <button class="guide-header-btn" onclick="openGuideModal()">
+      <i class="fas fa-question-circle"></i> መመሪያ
+    </button>
+    <div class="wallet-pill" onclick="switchTab('wallet')">
       <i class="fas fa-coins"></i>
       <span id="header-wallet-val">0.00</span>
     </div>
@@ -1288,6 +1462,161 @@ body {
   <div style="margin-top: 15px; text-align: center; position:relative; z-index:2;">
     <div style="font-size: 13px; color: #cbd5e1;">አዲስ ጨዋታ በ...</div>
     <div style="font-size: 36px; color: var(--gold); font-weight: 900;" id="modal-countdown">10</div>
+  </div>
+</div>
+
+<!-- ─── Interactive Onboarding & Game Guide Modal ─── -->
+<div id="guide-modal" class="modal-overlay hidden">
+  <div class="modal-card glass-panel">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:22px;">🎲</span>
+        <span style="font-size:16px; font-weight:900; color:var(--gold);">እንዴት መጫወት ይቻላል?</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeGuideModal()">&times;</button>
+    </div>
+
+    <div class="modal-scroll-body">
+      <!-- Step 1 -->
+      <div class="guide-step-card">
+        <div class="guide-step-header">
+          <span class="step-badge">ደረጃ 1</span>
+          <span class="step-title">ካርቴላ መምረጥ (Card Selection)</span>
+        </div>
+        <div class="step-body">
+          ከ 1 እስከ 1000 ባሉት ካርቴላዎች ውስጥ የሚፈልጉትን እስከ 4 ካርቴላ ይምረጡ። የ 1 ካርቴላ ዋጋ <b>10 ETB</b> ነው። ሰዓቱ (Countdown) ከማለቁ በፊት ይምረጡ!
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="guide-step-card">
+        <div class="guide-step-header">
+          <span class="step-badge">ደረጃ 2</span>
+          <span class="step-title">የቁጥሮች ጥሪና ምልክት ማድረግ (Calling & Daubing)</span>
+        </div>
+        <div class="step-body">
+          ጨዋታው ሲጀመር ከ 1 እስከ 75 ያሉት ቁጥሮች በ B-I-N-G-O ፊደላት ተራ በተራ ይጠራሉ። ቁጥሩ ሲጠራ ካርቴላዎ ላይ ያለውን <b>በእጅዎ በመንካት ምልክት ያድርጉ (Manual Daub)</b>። የመሃሉ <b>FREE</b> ሳጥን ሁሌም ነፃ ነው።
+        </div>
+      </div>
+
+      <!-- Step 3: Winning Patterns with visual grids -->
+      <div class="guide-step-card">
+        <div class="guide-step-header">
+          <span class="step-badge">ደረጃ 3</span>
+          <span class="step-title">የማሸነፊያ መስመሮች (Winning Patterns)</span>
+        </div>
+        <div class="step-body">
+          በአንድ ካርቴላ ላይ ከሚከተሉት 4 መንገዶች አንዱን ሲያጠናቅቁ BINGO ይሆናሉ፦
+          
+          <div class="patterns-grid">
+            <div class="pattern-item">
+              <div class="pattern-name">1. አግድም (Row)</div>
+              <div class="mini-grid">
+                <div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell free">F</div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+              </div>
+            </div>
+
+            <div class="pattern-item">
+              <div class="pattern-name">2. ቁመት (Column)</div>
+              <div class="mini-grid">
+                <div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div>
+                <div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell free">F</div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+              </div>
+            </div>
+
+            <div class="pattern-item">
+              <div class="pattern-name">3. ሰያፍ (Diagonal)</div>
+              <div class="mini-grid">
+                <div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell hit"></div>
+                <div class="mg-cell"></div><div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell hit free">F</div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell hit"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell hit"></div>
+              </div>
+            </div>
+
+            <div class="pattern-item">
+              <div class="pattern-name">4. 4 ማዕዘናት (4 Corners)</div>
+              <div class="mini-grid">
+                <div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div><div class="mg-cell hit"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell free">F</div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div>
+                <div class="mg-cell hit"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell"></div><div class="mg-cell hit"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="guide-step-card">
+        <div class="guide-step-header">
+          <span class="step-badge">ደረጃ 4</span>
+          <span class="step-title">ሽልማት ማውጣት (Instant Telebirr Payout)</span>
+        </div>
+        <div class="step-body">
+          BINGO ሲሉ ጠቅላላው የደራሽ ሽልማት በቀጥታ ወደ <b>Win Wallet</b>ዎ ገቢ ይደረጋል። ከአንድ በላይ አሸናፊዎች ከሆኑ ሽልማቱ እኩል ይካፈላል። ያሸነፉትን ከ 100 ETB ጀምሮ በማንኛውም ሰዓት ወደ ቴሌብር ማውጣት ይችላሉ!
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="submit-req-btn" onclick="closeGuideModal()" style="margin-top:0;">
+        <i class="fas fa-play"></i> ተረድቻለሁ • ጨዋታ ጀምር
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Terms & Fair Play Policy Modal ─── -->
+<div id="terms-modal" class="modal-overlay hidden">
+  <div class="modal-card glass-panel">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:22px;">📜</span>
+        <span style="font-size:16px; font-weight:900; color:var(--gold);">የአገልግሎት ህግና ደንብ</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeTermsModal()">&times;</button>
+    </div>
+
+    <div class="modal-scroll-body" style="font-size:12px; line-height:1.6; color:#cbd5e1;">
+      <div style="background:rgba(250,204,21,0.08); border-left:3px solid var(--gold); padding:10px; border-radius:6px; margin-bottom:12px;">
+        <b>እንኳን ወደ Abyssinia Bingo በደህና መጡ!</b> ፍትሃዊ፣ ግልጽ እና አዝናኝ የቢንጎ ተሞክሮ ለእርስዎ ለማቅረብ የምንሰራ ሲሆን፣ ተጠቃሚዎች የሚከተሉትን ህጎች ማክበር አለባቸው።
+      </div>
+
+      <h4 style="color:#f8fafc; margin:10px 0 4px 0;"><i class="fas fa-balance-scale" style="color:var(--blue);"></i> 1. ፍትሃዊ ጨዋታ (Fair Play)</h4>
+      <p>• እያንዳንዱ የካርቴላ ቁጥርና የጨዋታ ጥሪ ሙሉ በሙሉ በሲስተሙ በዘፈቀደ (Random) የሚፈጠር ነው።</p>
+      <p>• የመጨረሻው የተጠራው ቁጥር በእርስዎ የማሸነፊያ መስመር ላይ መገኘት አለበት።</p>
+      <p>• የተጭበረበረ አካውንት፣ በርካታ ቦቶችን ወይም የሲስተም ክፍተትን ለመጠቀም መሞከር አካውንትን እስከማገድ ያደርሳል።</p>
+
+      <h4 style="color:#f8fafc; margin:12px 0 4px 0;"><i class="fas fa-money-bill-wave" style="color:var(--emerald);"></i> 2. የተቀማጭ (Deposit) እና የወጭ (Withdrawal) ደንብ</h4>
+      <p>• ዝቅተኛው የገቢ (Deposit) መጠን 10 ETB ሲሆን፣ ዝቅተኛው የወጭ (Withdraw) መጠን 100 ETB ነው።</p>
+      <p>• ገቢ ሲያደርጉ ከቴሌብር ወይም CBE የተላከውን ትክክለኛ የSMS Transaction ID ማስገባት አለብዎት። የተሳሳተ ወይም የተደገመ ID ተቀባይነት የለውም።</p>
+      <p>• ወጪ ማድረግ የሚቻለው በጨዋታ አሸንፈው በ <b>Win Wallet</b> ውስጥ ባለው ገንዘብ ብቻ ነው።</p>
+      <p>• የወጭ ጥያቄዎች በአስተዳዳሪው በቴሌብር በጥቂት ደቂቃዎች ውስጥ ይፈጸማሉ።</p>
+
+      <h4 style="color:#f8fafc; margin:12px 0 4px 0;"><i class="fas fa-gift" style="color:var(--gold);"></i> 3. የቦነስ እና የግብዣ (Referral) ደንብ</h4>
+      <p>• ጓደኛዎን ሲጋብዙ ተጋባዡ ስልክ ቁጥሩን በቦቱ ላይ ሲመዘግብ የግብዣ ቦነሱ ገቢ ይደረጋል።</p>
+      <p>• የተገደበ ጊዜ የዲፖዚት ቦነስ ገቢ በተደረገበት ሰዓት ቦነሱ በራስ-ሰር ይታከላል።</p>
+      <p>• የቦነስ ገንዘቦች በቀጥታ በ <b>Play Wallet</b> የሚቀመጡ ሲሆን፣ ለመጫወትና አሸንፈው ወደ Win Wallet በማዛወር ወጪ ማድረግ ይቻላል።</p>
+
+      <h4 style="color:#f8fafc; margin:12px 0 4px 0;"><i class="fas fa-headset" style="color:#a855f7;"></i> 4. የደንበኞች ድጋፍ እና አቤቱታ</h4>
+      <p>ማንኛውም ጥያቄ፣ ችግር ወይም አስተያየት ካለዎት በይፋዊ የቴሌግራም አካውንታችን <a href="https://t.me/Tazikes" target="_blank" class="support-link-btn" style="color:var(--gold); font-weight:bold; text-decoration:none;"><span class="support-user-text">@Tazikes</span></a> በኩል ማነጋገር ይችላሉ።</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="submit-req-btn" onclick="closeTermsModal()" style="margin-top:0;">
+        <i class="fas fa-check"></i> ተስማምቻለሁ (Accept)
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1668,7 +1997,48 @@ function updateCalledNumbersUI(allCalled) {
   });
 }
 
-// ─── Multi-Cartela Live Display (With Smooth Scrolling & Always Auto-Marked) ───
+// ─── Manual Daubing & Multi-Cartela Live Display ───
+let playerMarkedCells = new Set();
+
+function calculateLocalCardDistance(cardNum) {
+  const cols = generateCardLayout(cardNum);
+  let minNeeded = 5;
+  for (let r = 0; r < 5; r++) {
+    let needed = 0;
+    for (let c = 0; c < 5; c++) {
+      const v = cols[c][r];
+      if (v !== 'FREE' && !calledNumbersSet.has(v)) needed++;
+    }
+    if (needed < minNeeded) minNeeded = needed;
+  }
+  for (let c = 0; c < 5; c++) {
+    let needed = 0;
+    for (let r = 0; r < 5; r++) {
+      const v = cols[c][r];
+      if (v !== 'FREE' && !calledNumbersSet.has(v)) needed++;
+    }
+    if (needed < minNeeded) minNeeded = needed;
+  }
+  let d1 = 0;
+  for (let i = 0; i < 5; i++) {
+    const v = cols[i][i];
+    if (v !== 'FREE' && !calledNumbersSet.has(v)) d1++;
+  }
+  if (d1 < minNeeded) minNeeded = d1;
+  let d2 = 0;
+  for (let i = 0; i < 5; i++) {
+    const v = cols[i][4 - i];
+    if (v !== 'FREE' && !calledNumbersSet.has(v)) d2++;
+  }
+  if (d2 < minNeeded) minNeeded = d2;
+  let crn = 0;
+  [cols[0][0], cols[4][0], cols[0][4], cols[4][4]].forEach(v => {
+    if (v !== 'FREE' && !calledNumbersSet.has(v)) crn++;
+  });
+  if (crn < minNeeded) minNeeded = crn;
+  return minNeeded;
+}
+
 function renderLiveCards() {
   const container = document.getElementById('live-cards-container');
   if (!container) return;
@@ -1682,14 +2052,14 @@ function renderLiveCards() {
   const cardsArr = [...selectedCards];
   // Cartelas closest to Bingo (smallest distance to win) appear at the top in real-time!
   cardsArr.sort((a, b) => {
-    const distA = cardDistances[a] !== undefined ? cardDistances[a] : 99;
-    const distB = cardDistances[b] !== undefined ? cardDistances[b] : 99;
+    const distA = cardDistances[a] !== undefined ? cardDistances[a] : calculateLocalCardDistance(a);
+    const distB = cardDistances[b] !== undefined ? cardDistances[b] : calculateLocalCardDistance(b);
     if (distA !== distB) return distA - distB;
     return a - b;
   });
 
   cardsArr.forEach(cn => {
-    const dist = cardDistances[cn];
+    const dist = cardDistances[cn] !== undefined ? cardDistances[cn] : calculateLocalCardDistance(cn);
     let badgeHtml = '';
     if (dist === 1) badgeHtml = `<span class="near-win-badge">1 የቀረው!</span>`;
     else if (dist === 2) badgeHtml = `<span style="font-size:9px; color:var(--emerald); font-weight:800; background:rgba(16,185,129,0.15); border:1px solid var(--emerald); padding:1px 6px; border-radius:10px;">2 የቀረው</span>`;
@@ -1705,11 +2075,12 @@ function renderLiveCards() {
       for (let c = 0; c < 5; c++) {
         const v = cols[c][r];
         const isFree = v === 'FREE';
-        const isCalled = !isFree && calledNumbersSet.has(v);
+        const key = `${cn}_${v}`;
+        const isMarked = isFree || playerMarkedCells.has(key);
         let cls = 'interactive-cell';
-        if (isFree) cls += ' free';
-        else if (isCalled) cls += ' marked-cell';
-        matrixHtml += `<div class="${cls}" onclick="manualDaubCell(this, ${v})">${isFree ? 'FREE' : v}</div>`;
+        if (isFree) cls += ' free marked-cell';
+        else if (isMarked) cls += ' marked-cell';
+        matrixHtml += `<div class="${cls}" onclick="manualDaubCell(this, ${cn}, ${isFree ? "'FREE'" : v})">${isFree ? 'FREE' : v}</div>`;
       }
     }
     matrixHtml += `</div>`;
@@ -1724,13 +2095,50 @@ function renderLiveCards() {
   });
 }
 
-function manualDaubCell(el, val) {
+function manualDaubCell(el, cardNum, val) {
   if (val === 'FREE') return;
-  if (calledNumbersSet.has(val)) {
-    el.classList.toggle('marked-cell');
-    playHaptic('light');
+  const numVal = Number(val);
+  const key = `${cardNum}_${numVal}`;
+  if (calledNumbersSet.has(numVal)) {
+    if (playerMarkedCells.has(key)) {
+      playerMarkedCells.delete(key);
+      el.classList.remove('marked-cell');
+      playHaptic('light');
+    } else {
+      playerMarkedCells.add(key);
+      el.classList.add('marked-cell');
+      el.classList.remove('daub-pulse');
+      void el.offsetWidth;
+      el.classList.add('daub-pulse');
+      playHaptic('medium');
+    }
+  } else {
+    el.classList.remove('invalid-cell-shake');
+    void el.offsetWidth;
+    el.classList.add('invalid-cell-shake');
+    playHaptic('warning');
+    showFooterNotification(`⚠️ ቁጥር ${val} ገና አልተጠራም!`);
   }
 }
+
+// ─── Interactive Rules & Policies Modals ───
+window.openGuideModal = function() {
+  const m = document.getElementById('guide-modal');
+  if (m) m.classList.remove('hidden');
+};
+window.closeGuideModal = function() {
+  const m = document.getElementById('guide-modal');
+  if (m) m.classList.add('hidden');
+  localStorage.setItem('abyssinia_guide_seen', 'true');
+};
+window.openTermsModal = function() {
+  const m = document.getElementById('terms-modal');
+  if (m) m.classList.remove('hidden');
+};
+window.closeTermsModal = function() {
+  const m = document.getElementById('terms-modal');
+  if (m) m.classList.add('hidden');
+};
 
 // ─── Tab Navigation & Smooth Dock Sliding ───
 const tabIndexMap = { ticket: 0, live: 0, wallet: 1, history: 2, rank: 3, profile: 4 };
@@ -1973,9 +2381,12 @@ socket.on('init_state', (state) => {
   }
 
   if (state.phase === 'waiting') {
+    if (localCountdownInterval) { clearInterval(localCountdownInterval); localCountdownInterval = null; }
     document.getElementById('timer-val').innerText = 'Waiting';
+  } else if (state.endsAt) {
+    startLocalCountdown(state.endsAt, state.remainingTime);
   } else if (state.remainingTime !== undefined) {
-    document.getElementById('timer-val').innerText = state.remainingTime + 's';
+    startLocalCountdown(null, state.remainingTime);
   }
 
   loadWallet();
@@ -2016,9 +2427,12 @@ socket.on('room_switched', (state) => {
   }
 
   if (state.phase === 'waiting') {
+    if (localCountdownInterval) { clearInterval(localCountdownInterval); localCountdownInterval = null; }
     document.getElementById('timer-val').innerText = 'Waiting';
+  } else if (state.endsAt) {
+    startLocalCountdown(state.endsAt, state.remainingTime);
   } else if (state.remainingTime !== undefined) {
-    document.getElementById('timer-val').innerText = state.remainingTime + 's';
+    startLocalCountdown(null, state.remainingTime);
   }
 
   if (state.phase === 'calling') {
@@ -2068,30 +2482,91 @@ socket.on('sync_taken_cards', (data) => {
 
 socket.on('wallet_updated', () => loadWallet());
 socket.on('card_error', (data) => showFooterNotification(data.message));
-socket.on('timer_tick', (data) => {
+
+// Lightweight delta sync for bot & player card picks (minimizes WebSocket bandwidth)
+socket.on('sync_card_picked', (data) => {
   if (data.roomId && data.roomId !== currentRoomId) return;
+  if (data.totalPlayers !== undefined) {
+    const pTop = document.getElementById('players-val-top');
+    const pBot = document.getElementById('players-val');
+    if (pTop) pTop.innerText = data.totalPlayers;
+    if (pBot) pBot.innerText = data.totalPlayers;
+  }
+  if (data.derash !== undefined) {
+    const dTop = document.getElementById('derash-val-top');
+    const dBot = document.getElementById('derash-val');
+    if (dTop) {
+      dTop.innerText = data.derash;
+      dTop.classList.remove('derash-bump');
+      void dTop.offsetWidth;
+      dTop.classList.add('derash-bump');
+    }
+    if (dBot) {
+      dBot.innerText = data.derash;
+      dBot.classList.remove('derash-bump');
+      void dBot.offsetWidth;
+      dBot.classList.add('derash-bump');
+    }
+  }
+  const btn = numberButtons[data.cardNum];
+  if (btn && !selectedCards.has(data.cardNum)) {
+    btn.className = 'number-btn taken-by-other just-taken';
+    setTimeout(() => btn?.classList.remove('just-taken'), 700);
+  }
+  updateCardClickability();
+});
+
+let localCountdownInterval = null;
+function startLocalCountdown(endsAt, initialRemaining) {
+  if (localCountdownInterval) clearInterval(localCountdownInterval);
   const tEl = document.getElementById('timer-val');
-  if (tEl) {
-    tEl.innerText = data.remaining + 's';
-    if (data.remaining <= 10 && data.remaining > 0) {
+  if (!tEl) return;
+  
+  const tick = () => {
+    let remaining = 0;
+    if (endsAt) {
+      remaining = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    } else if (initialRemaining !== undefined) {
+      remaining = initialRemaining;
+    }
+    tEl.innerText = remaining + 's';
+    if (remaining <= 10 && remaining > 0) {
       tEl.classList.add('timer-urgent');
     } else {
       tEl.classList.remove('timer-urgent');
     }
-  }
+    if (remaining <= 0) {
+      clearInterval(localCountdownInterval);
+      localCountdownInterval = null;
+    }
+  };
+  tick();
+  localCountdownInterval = setInterval(tick, 250);
+}
+
+socket.on('timer_tick', (data) => {
+  if (data.roomId && data.roomId !== currentRoomId) return;
+  startLocalCountdown(data.endsAt, data.remaining);
 });
 
 socket.on('phase_change', (data) => {
   if (data.roomId && data.roomId !== currentRoomId) return;
   gamePhase = data.phase;
   if (data.phase === 'calling') {
+    if (localCountdownInterval) { clearInterval(localCountdownInterval); localCountdownInterval = null; }
+    document.getElementById('timer-val').innerText = 'Playing';
     switchTab('live');
     buildBingoBoard();
     renderLiveCards();
   } else if (data.phase === 'countdown') {
+    playerMarkedCells.clear();
     switchTab('ticket');
+    if (data.endsAt) {
+      startLocalCountdown(data.endsAt, data.remaining);
+    }
     showFooterNotification("ጨዋታው በቅርቡ ይጀምራል! ካርቴላ ይምረጡ።");
   } else if (data.phase === 'waiting') {
+    if (localCountdownInterval) { clearInterval(localCountdownInterval); localCountdownInterval = null; }
     document.getElementById('timer-val').innerText = 'Waiting';
     showFooterNotification("🕒 በአስተዳዳሪው ጥሪ እስኪጀመር ድረስ በመጠበቅ ላይ...");
   }
@@ -2170,6 +2645,16 @@ socket.on('settings_updated', (data) => {
     const nmEl = document.getElementById('dep-telebirr-name');
     if (nmEl) nmEl.innerText = s.telebirr_name;
   }
+  if (s.support_username) {
+    const cleanUser = s.support_username.startsWith('@') ? s.support_username : '@' + s.support_username;
+    const rawUser = cleanUser.replace('@', '');
+    document.querySelectorAll('.support-link-btn').forEach(el => {
+      el.href = 'https://t.me/' + rawUser;
+    });
+    document.querySelectorAll('.support-user-text').forEach(el => {
+      el.innerText = cleanUser;
+    });
+  }
   applyDepositBonusUI(s);
   const ddb = document.getElementById('double-deposit-banner');
   if (ddb) {
@@ -2195,6 +2680,16 @@ async function loadAppSettings() {
       if (s.telebirr_name) {
         const nmEl = document.getElementById('dep-telebirr-name');
         if (nmEl) nmEl.innerText = s.telebirr_name;
+      }
+      if (s.support_username) {
+        const cleanUser = s.support_username.startsWith('@') ? s.support_username : '@' + s.support_username;
+        const rawUser = cleanUser.replace('@', '');
+        document.querySelectorAll('.support-link-btn').forEach(el => {
+          el.href = 'https://t.me/' + rawUser;
+        });
+        document.querySelectorAll('.support-user-text').forEach(el => {
+          el.innerText = cleanUser;
+        });
       }
       applyDepositBonusUI(s);
       const ddb = document.getElementById('double-deposit-banner');
@@ -2257,6 +2752,7 @@ socket.on('my_cards_distance', (data) => {
 socket.on('reset_game', (data) => {
   if (data?.roomId && data.roomId !== currentRoomId) return;
   selectedCards.clear();
+  playerMarkedCells.clear();
   calledNumbersSet.clear();
   cardDistances = {};
   gamePhase = 'waiting';
@@ -2381,6 +2877,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAppSettings();
   updateNavPill('ticket');
   setTimeout(hideLoadingScreen, 800);
+  if (!localStorage.getItem('abyssinia_guide_seen')) {
+    setTimeout(() => { if (typeof openGuideModal === 'function') openGuideModal(); }, 1200);
+  }
 });
 window.addEventListener('load', () => {
   loadWallet();

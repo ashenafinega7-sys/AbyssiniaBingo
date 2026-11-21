@@ -300,6 +300,20 @@
                             <input type="number" id="adm-bots-input" min="0" placeholder="Bots" style="width:65px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:bold;">
                             <button class="btn btn-warning btn-sm" onclick="saveRoomBotCount()"><i class="fas fa-save"></i> Set</button>
                         </div>
+
+                        <!-- Cartela Selection Countdown Timer Adjustment -->
+                        <div style="display:flex; gap:8px; align-items:center; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px; border:1px solid var(--border);">
+                            <span style="font-size:12px; font-weight:bold; color:var(--gold);"><i class="fas fa-stopwatch"></i> Countdown:</span>
+                            <div style="display:flex; gap:3px;">
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 6px; font-size:11px;" onclick="setRoomCountdownPreset(20)">20s</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 6px; font-size:11px;" onclick="setRoomCountdownPreset(30)">30s</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 6px; font-size:11px;" onclick="setRoomCountdownPreset(40)">40s</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 6px; font-size:11px;" onclick="setRoomCountdownPreset(50)">50s</button>
+                                <button class="btn btn-secondary btn-sm" style="padding:3px 6px; font-size:11px;" onclick="setRoomCountdownPreset(60)">60s</button>
+                            </div>
+                            <input type="number" id="adm-countdown-input" min="10" max="180" placeholder="40" style="width:65px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-weight:bold;">
+                            <button class="btn btn-primary btn-sm" onclick="saveRoomCountdown()"><i class="fas fa-save"></i> Set Timer</button>
+                        </div>
                     </div>
 
                     <!-- Quick Navigation Cards to Players and Cartelas -->
@@ -648,8 +662,17 @@
             <div id="page-settings" class="page">
                 <div class="table-wrapper" style="padding: 25px; max-width: 600px;">
                     <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fas fa-cog"></i> Global Payment & Game Settings</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label><i class="fab fa-telegram" style="color:var(--blue);"></i> Support Telegram Username</label>
+                        <input type="text" id="set-support-username" class="form-control mt-1" placeholder="@Tazikes">
+                        <small style="color:var(--text-muted); font-size:11px;">e.g., @Tazikes or your support link. Updates Bot and Mini App support links immediately.</small>
+                    </div>
                     <div style="margin-bottom: 12px;"><label>Telebirr Number</label><input type="text" id="set-telebirr" class="form-control mt-1"></div>
                     <div style="margin-bottom: 12px;"><label>Telebirr Name</label><input type="text" id="set-telebirr-name" class="form-control mt-1"></div>
+                    <div style="margin-bottom: 12px;">
+                        <label><i class="fas fa-stopwatch" style="color:var(--gold);"></i> Default Cartela Selection Countdown Timer (seconds)</label>
+                        <input type="number" id="set-countdown-time" min="10" max="180" class="form-control mt-1" placeholder="40">
+                    </div>
                     <div style="margin-bottom: 15px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,0.2);">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <input type="checkbox" id="enable-double-deposit" style="width: 18px; height: 18px;">
@@ -870,11 +893,17 @@ function startGameStatusPolling() {
     if (gameStatusInterval) return;
     loadGameStatus();
     gameStatusInterval = setInterval(() => {
-        if (currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas') {
+        if (!document.hidden && (currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas')) {
             loadGameStatus();
         }
-    }, 4000);
+    }, 8000);
 }
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && (currentPage === 'game' || currentPage === 'live-players' || currentPage === 'live-cartelas')) {
+        loadGameStatus();
+    }
+});
 
 async function loadGameStatus() {
     try {
@@ -940,6 +969,11 @@ async function loadGameStatus() {
                 }
                 const curBotsEl = document.getElementById('adm-current-bots');
                 if (curBotsEl) curBotsEl.innerText = botCountVal;
+
+                const cdInput = document.getElementById('adm-countdown-input');
+                if (cdInput && !cdInput.matches(':focus') && room.settings.countdownTime) {
+                    cdInput.value = room.settings.countdownTime;
+                }
             }
 
             // Active Players List
@@ -1732,8 +1766,12 @@ async function loadGlobalSettings() {
     try {
         const d = await apiFetch('/api/settings');
         if (d.success && d.data) {
+            const supEl = document.getElementById('set-support-username');
+            if (supEl) supEl.value = d.data.support_username || '@Tazikes';
             document.getElementById('set-telebirr').value = d.data.telebirr_number || '';
             document.getElementById('set-telebirr-name').value = d.data.telebirr_name || '';
+            const cdEl = document.getElementById('set-countdown-time');
+            if (cdEl) cdEl.value = d.data.countdownTime || 40;
             document.getElementById('enable-double-deposit').checked = !!d.data.doubleDepositActive;
         }
     } catch(e) {}
@@ -1743,10 +1781,38 @@ async function saveGlobalSettings() {
     const tele = document.getElementById('set-telebirr').value.trim();
     const name = document.getElementById('set-telebirr-name').value.trim();
     const dd = document.getElementById('enable-double-deposit').checked;
+    const supEl = document.getElementById('set-support-username');
+    const supportUser = supEl ? supEl.value.trim() : '@Tazikes';
+    const cdEl = document.getElementById('set-countdown-time');
+    const cdTime = cdEl ? parseInt(cdEl.value) || 40 : 40;
     try {
-        const res = await apiFetch('/api/admin/settings', 'POST', { telebirr_number: tele, telebirr_name: name, doubleDepositActive: dd });
+        const res = await apiFetch('/api/admin/settings', 'POST', {
+            telebirr_number: tele,
+            telebirr_name: name,
+            doubleDepositActive: dd,
+            support_username: supportUser,
+            countdownTime: cdTime
+        });
         if (res.success) showToast('Settings saved & broadcast to all users!');
     } catch(e) { showToast('Save failed', true); }
+}
+
+function setRoomCountdownPreset(sec) {
+    const inp = document.getElementById('adm-countdown-input');
+    if (inp) inp.value = sec;
+    saveRoomCountdown();
+}
+
+async function saveRoomCountdown() {
+    const inp = document.getElementById('adm-countdown-input');
+    const sec = parseInt(inp ? inp.value : 40) || 40;
+    try {
+        const res = await apiFetch(`/api/admin/room/${currentAdminRoomId}/countdown-time`, 'POST', { countdownTime: sec });
+        if (res.success) {
+            showToast(`Cartela selection countdown set to ${res.countdownTime}s`);
+            loadGameStatus();
+        }
+    } catch(e) { showToast('Error saving countdown', true); }
 }
 
 // ─── Invitation Bonus Settings ───

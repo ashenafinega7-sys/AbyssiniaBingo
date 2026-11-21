@@ -78,13 +78,36 @@ const io = new Server(server, {
         methods: ['GET', 'POST'],
         credentials: true
     },
-    perMessageDeflate: { threshold: 1024 }
+    pingInterval: 25000,
+    pingTimeout: 20000,
+    perMessageDeflate: {
+        threshold: 512,
+        zlibDeflateOptions: {
+            chunkSize: 1024,
+            memLevel: 7,
+            level: 3
+        },
+        zlibInflateOptions: {
+            chunkSize: 1024
+        }
+    }
 });
 
-app.use(compression({ level: 6, threshold: 1024 }));
+app.use(compression({ level: 6, threshold: 512 }));
 app.use(corsMiddleware);
 app.use(express.json({ limit: '50kb' }));
-app.use(express.static('public', { maxAge: '1d' }));
+app.use(express.static('public', {
+    maxAge: '1d',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'public, max-age=600');
+        } else if (path.match(/\.(mp3|wav|ogg|jpg|jpeg|png|svg|ico)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+        }
+    }
+}));
 
 // ─── Lightweight Health Check for UptimeRobot / Diagnostics ───
 app.get('/health', (req, res) => {
@@ -132,9 +155,10 @@ const SettingsSchema = new mongoose.Schema({
     key: { type: String, default: 'payment_accounts', unique: true },
     telebirr_number: { type: String, default: '0968940123' }, telebirr_name: { type: String, default: 'tazebew' },
     cbe_number: { type: String, default: '1000390803005' }, cbe_name: { type: String, default: 'tazebew' },
+    support_username: { type: String, default: '@Tazikes' },
     enable_cbe: { type: Boolean, default: true }, maxCards: { type: Number, default: 1000 },
     doubleDepositActive: { type: Boolean, default: false }, doubleDepositMultiplier: { type: Number, default: 2 },
-    countdownTime: { type: Number, default: 50 },
+    countdownTime: { type: Number, default: 40 },
     botEnabled: { type: Boolean, default: true },
     visualPlayers: { type: Number, default: 350 },
     botCount: { type: Number, default: 350 },
@@ -378,10 +402,18 @@ const BOT_TEXTS = {
     }
 };
 
+let cachedGlobalSettings = {
+    support_username: '@Tazikes',
+    referral_bonus_referrer: 30,
+    referral_bonus_referee: 20
+};
+
 function getBotText(lang, key, params = {}) {
     const l = (lang && BOT_TEXTS[lang]) ? lang : 'am';
     let text = BOT_TEXTS[l]?.[key] || BOT_TEXTS['en']?.[key] || BOT_TEXTS['am']?.[key] || '';
-    const merged = { ref_bonus: 30, new_bonus: 20, ...params };
+    const supportUser = cachedGlobalSettings.support_username || '@Tazikes';
+    text = text.replaceAll('@Tazikes', supportUser);
+    const merged = { ref_bonus: 30, new_bonus: 20, support_username: supportUser, ...params };
     for (const [k, v] of Object.entries(merged)) {
         text = text.replaceAll(`{${k}}`, v);
     }
@@ -423,6 +455,16 @@ function notifyAdminTransaction(txn) {
 }
 
 const userConvState = new Map();
+
+// Periodic cleanup of stale conversation states to eliminate memory leaks
+setInterval(() => {
+    const now = Date.now();
+    for (const [userId, conv] of userConvState.entries()) {
+        if (!conv.time || (now - conv.time) > 20 * 60 * 1000) {
+            userConvState.delete(userId);
+        }
+    }
+}, 10 * 60 * 1000);
 
 async function handleTelegramUpdate(update) {
     if (!update) return;
@@ -1070,7 +1112,7 @@ function initRoom(def) {
 }
 
 // ─── Room Bot Card Spawner (Gradual & Sequential Selection During Countdown) ───
-function spawnBotCards(room, count) {
+function spawnBotCards(room, count, fullSync = false) {
     if (!room.settings.botEnabled || count <= 0) return 0;
 
     const botCardNums = [];
@@ -1102,6 +1144,7 @@ function spawnBotCards(room, count) {
     }
 
     const toAdd = Math.min(count, availableCards.length);
+    const addedCardNums = [];
     for (let i = 0; i < toAdd; i++) {
         const cardNum = availableCards[i];
         const botIdx = botCardNums.length + i;
@@ -1125,6 +1168,7 @@ function spawnBotCards(room, count) {
                 }
             });
         });
+        addedCardNums.push(cardNum);
     }
 
     const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
@@ -1133,13 +1177,24 @@ function spawnBotCards(room, count) {
     const totalPlayersDisplay = totalActualCards;
     const derash = totalActualCards * room.derashPerCard;
 
-    emitRoom(room.id, 'sync_taken_cards', {
-        roomId: room.id,
-        takenCards: Object.keys(room.takenCards).map(Number),
-        totalPlayers: totalPlayersDisplay,
-        totalCards: totalActualCards,
-        derash: derash
-    });
+    if (fullSync) {
+        emitRoom(room.id, 'sync_taken_cards', {
+            roomId: room.id,
+            takenCards: Object.keys(room.takenCards).map(Number),
+            totalPlayers: totalPlayersDisplay,
+            totalCards: totalActualCards,
+            derash: derash
+        });
+    } else {
+        // High-efficiency delta update: transmits tiny lightweight payload instead of 350-1000 array!
+        emitRoom(room.id, 'sync_card_picked', {
+            roomId: room.id,
+            addedCards: addedCardNums,
+            totalPlayers: totalPlayersDisplay,
+            totalCards: totalActualCards,
+            derash: derash
+        });
+    }
 
     return toAdd;
 }
@@ -1402,11 +1457,7 @@ function getNextNumberToCall(room) {
 function emitRoom(roomId, event, data) {
     const payload = { ...data, roomId };
     io.to(`room_${roomId}`).emit(event, payload);
-    // Also broadcast to legacy global room if this is classic_10
-    if (roomId === 'classic_10') {
-        io.to('abisinya_global_room').emit(event, payload);
-    }
-    // Also broadcast directly to admin stream so admin panel is always 100% synced in real time
+    // Broadcast directly to admin stream so admin panel is always 100% synced in real time
     io.to('admin_stream').emit(event, payload);
 }
 
@@ -1467,7 +1518,6 @@ function startRoomRound(room) {
     if (room.autoRestartTimer) clearTimeout(room.autoRestartTimer);
     if (room.botSpawnInterval) clearInterval(room.botSpawnInterval);
     if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
-    if (room.botSpawnTimer) clearTimeout(room.botSpawnTimer);
 
     room.phase = 'countdown';
     room.currentCall = null;
@@ -1477,16 +1527,29 @@ function startRoomRound(room) {
     room.targetForceWinCard = null;
     room.targetForceWinCallCount = null;
     room.remainingTime = room.settings.countdownTime || 40;
+    const countdownDuration = room.remainingTime;
+    const endsAt = Date.now() + (countdownDuration * 1000);
 
-    emitRoom(room.id, 'phase_change', { roomId: room.id, phase: 'countdown' });
-    emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime });
+    // Broadcast phase change with synchronized target timestamp for local client countdown
+    emitRoom(room.id, 'phase_change', {
+        roomId: room.id,
+        phase: 'countdown',
+        duration: countdownDuration,
+        endsAt: endsAt,
+        remainingTime: room.remainingTime
+    });
+    emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime, endsAt });
 
     startRoomBotSpawning(room);
 
     room.gameTimerInterval = setInterval(() => {
         if (!room.isRunning) return;
         room.remainingTime--;
-        emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime });
+
+        // Throttled WebSocket timer: emit every 5s or during final 5s to save 85% bandwidth
+        if (room.remainingTime % 5 === 0 || room.remainingTime <= 5) {
+            emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime, endsAt });
+        }
 
         if (room.remainingTime <= 0) {
             // Countdown ended: allocate any remaining bots up to target count immediately
@@ -1495,7 +1558,19 @@ function startRoomRound(room) {
             const targetBots = Math.max(0, Number(room.settings.botCount !== undefined ? room.settings.botCount : 40));
             const currentBots = Object.values(room.takenCards).filter(c => c.isBot).length;
             if (room.settings.botEnabled && currentBots < targetBots) {
-                spawnBotCards(room, targetBots - currentBots);
+                spawnBotCards(room, targetBots - currentBots, true);
+            } else {
+                // Authoritative full sync before calling begins
+                const realCardsCount = Object.values(room.takenCards).filter(c => !c.isBot).length;
+                const botsCount = Object.values(room.takenCards).filter(c => c.isBot).length;
+                const totalActualCards = realCardsCount + botsCount;
+                emitRoom(room.id, 'sync_taken_cards', {
+                    roomId: room.id,
+                    takenCards: Object.keys(room.takenCards).map(Number),
+                    totalPlayers: totalActualCards,
+                    totalCards: totalActualCards,
+                    derash: totalActualCards * room.derashPerCard
+                });
             }
 
             const totalCards = Object.keys(room.takenCards).length;
@@ -1529,8 +1604,8 @@ function startRoomRound(room) {
                     emitRoom(room.id, 'new_number_called', {
                         roomId: room.id,
                         number: num,
-                        allCalled: room.calledNumbers,
-                        callCount: room.calledNumbers.length
+                        callCount: room.calledNumbers.length,
+                        allCalled: room.calledNumbers
                     });
 
                     // Broadcast card distance updates to all connected players with active cards
@@ -1717,12 +1792,16 @@ async function connectToMongo() {
         console.log('✅ MongoDB connected successfully');
         let s = await Settings.findOne({ key: 'payment_accounts' });
         if (!s) s = await Settings.create({ key: 'payment_accounts' });
+        if (s.support_username) cachedGlobalSettings.support_username = s.support_username;
+        if (s.referral_bonus_referrer !== undefined) cachedGlobalSettings.referral_bonus_referrer = s.referral_bonus_referrer;
+        if (s.referral_bonus_referee !== undefined) cachedGlobalSettings.referral_bonus_referee = s.referral_bonus_referee;
 
         Object.values(rooms).forEach(room => {
             if (s.botNames && s.botNames.length > 0) room.settings.botNames = s.botNames;
             if (s.botEnabled !== undefined) room.settings.botEnabled = s.botEnabled;
             if (s.botWinRate !== undefined) room.settings.botWinRate = s.botWinRate;
             if (s.maxCards) room.settings.maxCards = s.maxCards;
+            if (s.countdownTime) room.settings.countdownTime = s.countdownTime;
             const savedBots = s.get ? s.get(`botCount_${room.id}`) : s[`botCount_${room.id}`];
             if (savedBots !== undefined && Number.isFinite(Number(savedBots))) {
                 room.settings.botCount = Number(savedBots);
@@ -1809,7 +1888,19 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
                 r.settings.maxCards = mc;
                 emitRoom(r.id, 'sync_room_settings', { roomId: r.id, maxCards: mc });
             }
+            if (update.countdownTime !== undefined) {
+                const cd = Math.max(10, Math.min(180, Number(update.countdownTime)));
+                r.settings.countdownTime = cd;
+                if (r.phase === 'countdown') {
+                    r.remainingTime = Math.min(r.remainingTime, cd);
+                    emitRoom(r.id, 'timer_tick', { roomId: r.id, remaining: r.remainingTime });
+                }
+            }
         });
+
+        if (update.support_username) {
+            cachedGlobalSettings.support_username = update.support_username.trim();
+        }
 
         if (update.deposit_bonus_enabled !== undefined) {
             if (update.deposit_bonus_enabled) {
@@ -1823,7 +1914,7 @@ app.post('/api/admin/settings', adminAuth, async (req, res) => {
 
         const updatedSettings = await Settings.findOneAndUpdate({ key: 'payment_accounts' }, update, { upsert: true, new: true });
         io.emit('settings_updated', { settings: updatedSettings });
-        res.json({ success: true });
+        res.json({ success: true, settings: updatedSettings });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
@@ -1834,6 +1925,21 @@ app.post('/api/admin/room/:roomId/start-game', adminAuth, (req, res) => {
     room.isForceWinActive = false;
     if (room.phase === 'waiting' || room.phase === 'gameover') startRoomRound(room);
     res.json({ success: true, roomId: room.id });
+});
+
+app.post('/api/admin/room/:roomId/countdown-time', adminAuth, async (req, res) => {
+    const room = rooms[req.params.roomId] || rooms['classic_10'];
+    const countdownTime = Math.max(10, Math.min(180, Number(req.body.countdownTime) || 40));
+    room.settings.countdownTime = countdownTime;
+    if (room.phase === 'countdown') {
+        room.remainingTime = Math.min(room.remainingTime, countdownTime);
+        emitRoom(room.id, 'timer_tick', { roomId: room.id, remaining: room.remainingTime });
+    }
+    try {
+        await Settings.updateOne({ key: 'payment_accounts' }, { countdownTime });
+    } catch(e) {}
+    emitRoom(room.id, 'sync_room_settings', { roomId: room.id, countdownTime });
+    res.json({ success: true, countdownTime: room.settings.countdownTime, roomId: room.id });
 });
 
 app.post('/api/admin/room/:roomId/max-cards', adminAuth, async (req, res) => {
@@ -2804,7 +2910,6 @@ io.on('connection', (socket) => {
         }
         socket.currentRoomId = targetRoomId;
         socket.join(`room_${targetRoomId}`);
-        socket.join('abisinya_global_room');
 
         let userId = null;
         let userName = payload?.name || 'Player';
