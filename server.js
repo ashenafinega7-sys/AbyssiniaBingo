@@ -25,7 +25,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const REQUIRE_TG_AUTH = process.env.REQUIRE_TG_AUTH === 'true';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const FRONTEND_URL = (process.env.FRONTEND_URL || "https://abyssiniabingo.pages.dev").replace(/\/$/, '');
+const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.WEB_APP_URL || "https://abyssiniabingo.pages.dev").replace(/\/$/, '');
 const ADMIN_IDS = (process.env.ADMIN_IDS || process.env.ADMIN_ID || "5925033073,715580610")
     .split(',')
     .map(s => s.trim())
